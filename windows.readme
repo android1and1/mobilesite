@@ -1,0 +1,8 @@
+#branch windows(origin:windows)
+# At Window Platform
+# use python.exe
+# git.exe
+# msys
+
+All Py File begin with "#! C:\Python27\python.exe"
+and some difference from Linux Platform.
