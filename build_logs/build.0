@@ -1,0 +1,1313 @@
+﻿newbook,oldbook,还有关于饰品的商品信息表，要合并成一张《商品信息基础表》
+格式是编号，品名，数量，进价，卖价。共五个字段。
+现在要处理的问题是newbook与oldbook有各自的独立数据，也有共同的数据。以编号为primary key时，会产生冲突，如果重新编号，也有一个冗余数据的问题，从长远来看会拖慢数据存取动作。
+现在考虑建立一个python脚本，来处理此合并的问题。
+1,读入oldbook,newbook两个文件，存为两个大字典,初步代码是这样的：
+old_fp = open('oldbook.csv','r')
+for line in old_fp:
+     
+
+字典的结构是：
+>>> d1={'partnumber1':('good1',100,80,120)}
+partnumber商品编号，是元素的键，冒号后的一个tuple是字段集合，分别是品名，库存数量，进价，卖价四个字段。
+2,oldbook以newbook为基准进行update.结果是凡是共同编号的商品，信息以newbook为准，oldbook并吸收了在本表中没有的数据。可以说oldbook形成的字典就是最后的目标字典。下一步都会在oldbook上操作，可以给它一个新的名称，叫book.
+3,
+
+
+还牵涉到排序的问题。字典解包的问题。
+保存一些关键性步骤。
+
+创建oldbook的字典---dold:
+ofp = fileinput.input('E:\\troubleshoot_dyj\\oldbook.csv')
+>>> dold={}
+>>> for i in ofp:
+	a,b,c,d,e = tuple(i.strip().split(','))
+	dold[a] = (b,c,d,e)
+创建newbook的字典---dnew:
+
+dnew={}
+>>> nfp = fileinput.input('E:\\troubleshoot_dyj\\newbook.csv')
+>>> dnew = {}
+>>> for i in nfp:
+	a,b,c,d,e = tuple(i.strip().split(','))
+	dnew[a] = (b,c,d,e)
+
+
+以dnew为基准更新dold,最全面的数据现在移到了dold里，dnew可以清空了：
+dold.update(dnew)
+dnew.clear()
+对目标字典进行排序，以第一个元素，即原字典的键为基准。
+dnew = sorted(dold.iteritems(),key=lambda x:x[0])
+
+准备输出文件，模式为'w':
+output=open('E:\\troubleshoot_dyj\\output.csv','w')
+
+最后的解包，输出为一个有序的表格类型。
+for i in dnew:
+	a,(b,c,d,e) = i
+	output.write(','.join([a,b,c,d,e]) + '\n')
+
+
+总共数据有5666行。
+这是多年经营历史的体现。代表了近十年盘过的销售品种。
+
+
+
+＝＝＝＝＝＝＝＝＝＝接下，是考虑从CSV文件，导入sqlite3的问题了。
+先要有一张表，我们定为“goodbase"表，有8个字段，其中primary key是一个integer类型，接其后的5个字段就是我们CSV文件的5个，再后是history，可以保存我们每次维护表的过程，最后的（第8）一个是更新时间，是时间截类型。
+create table `goodbase` (id integer not null primary key,
+                         old_id text not null unique,
+                         item_name text not null unique,
+                         contains integer not null default 0,
+                         original_price integer,
+                         sale_price integer,
+                         history text default '',
+			update_time TiMESTAMP default(datetime('now','localtime'))
+			)
+
+                         
+import 方法是适用的。
+进入sqlite3的shell里，运行.separator ',' ##以','为定界符。
+再：.import XXX.csv  ##导入字段。
+我们还是采用稳妥的方式，先导入小段从sorted_all.csv(我们前面步骤生成的csv文件，里面是合并的数据）截取的数据，主要观察中文乱码是否存在和字段类型是否匹配。
+我们联合了awk和sed两个文本处理的工具完成CSV文件的准备工作。
+awk -F',' 'BEGIN{OFS=","}{print NR,$1,$2,"0",$4,$5;}' pregood.csv |sed 's/$/,null,2013-11-01 00:00:00/' > filename
+开始是想在AWK里做完这些的，但不知何故，在$5（最后一个字段）后无论加上什么，输出时都会把$5后面的东西，放到了$1的前面，连NR（当前行号）也不显示了，想了很多办法未果，于是只能联合SED。
+SED里没有在当前行附加字符串的办法，如果使用a操作，只能在下一行附加字符串。
+所以，最后就成了这个样子了。
+我担心的中文乱码是否出现呢？让我们进一步。
+为此，我制作了两个不同编码的文件，一个是pregood.csv,一个是pregood.txt,前者以系统默认（GBK）来编码，后者转码成了UTF-8文本。
+果然，python程序在操作sqlite3时出问题了，加上cxn.text_factory=str,也无济于事。
+而pregoo.txt在import时，也有一个小插曲，WINDOWS在文本最前面加上BOM，导致第一行无法导入。后来是用dos2unix进行了转换，现在，从SHELL里看到的是乱码，但是浏览器里取得了正确的中文显示。
+可见，必须：
+1）以记事本程序中“另存为”转码成UTF-8；
+2）导入前使用DOS2UNIX程序转换成SQLITE3“喜欢”的样式。
+我们正规的转换，导入就要开始了。
+先联合SED，AWK制作这个大文件。
+
+好的，现在已经做到了，导入成功的条目是5651,还有近十条无法导入，是因为我们的item_name的字段约束是unique，它们之前都出现过同名的商品，事到如今，已经是手工改写的阶段了。
+delete id=1123(1124)
+update id=1114(1116)
+replace,round这些基本函数，sqlite3还是有的，但参数与常见编程语言有些另类的感觉。如replace(x,y,z),指y如果在x里，则用z来代替。
+update pregood set item_name = replace(item_name,'ok','no ok') where id=1001;
+round()是单参或两参的，第二个参数指定小数点后的位数（精度）。
+
+update pregood set original_price=round(sale_price/1.32) where id=5;
+
+没有想到前端开发的工作量如此之大，我几乎是一天没离开桌子，才写下了这么一张网页：
+<!DOCTYPE html>
+<html lang="en">
+<head><title>tip of item name.</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<script src="/static/jses/DOMhelp.js"></script>
+<script src="/static/jses/HTTP.js"></script>
+<style>
+.block{
+	margin-top:4em;
+	position:relative;
+	height:214px;	
+	background-color:#ffffff;
+}
+#suggest{
+	width:85%;
+	padding:1.1em;
+	text-align:left;
+}
+#suggest span{
+	padding:.9em;
+	display:block;
+	text-indent:1.225em;
+	font-size:135%;
+	color:#f11a88;
+}
+#suggest span a{
+	text-decoration:none;
+}
+.f1 input{
+	height:2em;	
+}
+.f2 input{
+	height:2em;	
+}
+#input_item_name,#input_amount{
+	width:71.3%;
+	font-size:128%;
+}
+.noinput{
+	display:none;
+}
+</style>
+</head>
+<body>
+<a name="f1"></a>
+<header>
+<h3>Input Good's Item Name:</h3>
+</header>
+<form class="f1" name="f1">
+<label for="input_item_name">Input Good's Key Word Here: <input type="text" name="input_item_name" id="input_item_name" /></label>
+<p><input type="button" value="Ensure" id="item_name_ensure" />&nbsp;&nbsp;<input type="reset" value="Reset"/> </p>
+<input type="text" class="noinput"/>
+</form>
+<div id="suggest"> 
+</div>
+<div class="block">
+
+<!-- /////////here is input2 ////////// -->
+<!-- /////////header is a anchor. ////////// -->
+
+<a name="f2"></a>
+<header>
+<h3>Input Good's Amount</h3>
+</header>
+<div class="block">
+<form class="f2" name="f2">
+<label for="input_amount">Input Amount Here:&nbsp; <input type="text"  name="input_amount" id="input_amount" /></label>
+<p>
+	<button value="-1" id="sub1">-1</button>&nbsp;&nbsp;&nbsp;
+	<button value="1" id="add1">+1</button>&nbsp;&nbsp;&nbsp;
+	<button value="10" id="add10">+10</button>&nbsp;&nbsp;&nbsp;
+<input type="button" value="Ensure" id="amount_ensure"  />&nbsp;&nbsp;
+<input type="reset" value="Reset"/>
+</p>
+<input type="text" class="noinput"/>
+</form>
+</div>
+<!--  ////////////   commit ////////// -->
+<a name="f3"></a>
+<div class="block">
+	<header>
+		<h2>Review Form</h2>
+	</header>
+<form name="f3">
+</form>
+</div>
+<!-- js code from here.................................... -->
+<script>
+elts = DOMhelp.getElements("input_item_name","input_amount","suggest","item_name_ensure","amount_ensure","add1","sub1","add10");
+
+var suggest=elts['suggest'];
+var input_item_name = elts['input_item_name'] //it is input widget.
+var input_amount = elts['input_amount'] //it is input widget.
+var item_name_ensure=elts['item_name_ensure'];//will raise form.
+var amount_ensure=elts['amount_ensure'];//will raise form.
+var add1=elts['add1'];
+var add10=elts['add10'];
+var sub1 = elts['sub1'];
+
+
+//add event listener
+DOMhelp.addEvent(input_item_name,'change',onchange_check,false);
+DOMhelp.addEvent(item_name_ensure,'click',onensure,false);
+DOMhelp.addEvent(amount_ensure,'click',onensure,false);
+DOMhelp.addEvent(add1,'click',adjust,false);
+DOMhelp.addEvent(add10,'click',adjust,false);
+DOMhelp.addEvent(sub1,'click',adjust,false);
+
+
+
+//data is global variable!!!!
+
+var data=['connect server error'];
+
+function onPageLoad(){
+//	HTTP.post('http://localhost/give_data.py',{'query':'give me a data.','func':'icanshowit'},callback,handlerError);
+//	HTTP.getTextWithScript('select item_name from pancun',callback,'/give_data.py');
+	//HTTP.getTextWithScript('select item_name from pancun',callback,'/give_data.py');
+	HTTP.getTextWithScript('select id,old_id,item_name from pregood',callback,'/give_data.py');
+
+}
+function callback(server_data){
+	data=eval('(' + server_data + ')');
+};
+
+
+function onchange_check(e){
+	var t = DOMhelp.getTarget(e);
+	//alert(t.nodeName + t.value);
+	if(t.value.length >= 3){
+		show(check(t.value,data));
+	}else{
+		var notice = DOMhelp.make('H3','*MUST MORE THAN 2 CHARS.');
+		document.f1.insertBefore(notice,document.f1.lastElementChild);
+		DOMhelp.shake(t);
+		function delself(e){
+			e.parentNode.removeChild(e);
+		}
+		DOMhelp.fadeOut(notice,delself,2000);
+	}
+}
+
+//NOTICE:check() :do link wrap data going here:
+function check(input,source_data){
+	var check_result=[];
+	for(var i in source_data){
+		if(source_data[i].toLowerCase().indexOf(input.toLowerCase())!=-1){
+//NOTICE:do link wrap data going here:
+			//var tip = source_data[i].split(':')[2].link('/localehost/query_via_item_name?table=pregood&id=' + source_data[i].split(':')[0]);		
+			var tip = source_data[i].split(":")[2];
+			check_result.push(tip);
+		}// endif.
+	}//end for.
+	return check_result;
+}
+
+function show(check_result){
+	//first,need clear all childs. always forgot!!
+	if(suggest.childNodes){
+		for(var i=suggest.childNodes.length-1;i>=0;i--){
+			suggest.removeChild(suggest.childNodes[i]);
+		}
+	}
+	if(check_result && check_result.length!=0){
+		for(var i in check_result){
+			var element = DOMhelp.make('span',check_result[i]); 
+			suggest.appendChild(element);
+			DOMhelp.addEvent(element,'click',tipReplace,false);	
+		}
+	}
+}
+function tipReplace(e){
+	//alert('heard from tipReplace()');
+	var source = DOMhelp.getTarget(e);
+	input_item_name.value = source.textContent;	
+	//return to form1:input_item_name
+	input_item_name.blur();
+	document.location.href='#input_item_name';
+}
+
+//on ensure button is clicked
+function onensure(e){
+	var t = DOMhelp.getTarget(e);
+	switch(t.id){
+		case "item_name_ensure":
+			document.location.href = '#f2'; 
+			break;
+		case "amount_ensure":
+			document.location.href = '#f3';
+			review();	
+			break;
+		default:
+			break;
+	}
+	function review(){
+		var record = DOMhelp.make('P',{'id':'counter' + (++commit_counter)},'commit ' + commit_counter + ': ' + input_item_name.value + ' , ' + input_amount.value);
+		var commit_button = DOMhelp.make('button',{'id':'combut'+commit_counter,'onclick':'commit()'},'commit!');
+		var cancel_button = DOMhelp.make('button',{'id':'canbut'+commit_counter,'onclick':'cancel()'},'cancel!');
+		document.f3.appendChild(record);
+		document.f3.appendChild(commit_button);
+		document.f3.appendChild(cancel_button);
+	}
+}
+function commit(){
+	var combut = document.getElementById('combut' + commit_counter);
+	combut.parentNode.removeChild(combut);
+	var canbut = document.getElementById('canbut' + commit_counter);
+	canbut.parentNode.removeChild(canbut);
+	alert('Sending...');
+}
+function cancel(){
+	var record = document.getElementById('counter' + commit_counter);
+	record.parentNode.removeChild(record);
+	document.f1.reset();
+	show(null);//for clear tips if exists.
+	document.f2.reset();
+	document.location.href='#f1';
+	var combut = document.getElementById('combut' + commit_counter);
+	combut.parentNode.removeChild(combut);
+	var canbut = document.getElementById('canbut' + commit_counter);
+	canbut.parentNode.removeChild(canbut);
+}
+
+function adjust(e){
+	var t=DOMhelp.getTarget(e);
+	input_amount.value = (Number(input_amount.value)) + Number(t.value); 	
+	DOMhelp.stopDefault(e);	
+}
+input_item_name.focus();
+commit_counter = 0;
+window.onload = onPageLoad;
+</script>
+
+</body>
+</html>
+
+麦库的服务器出故障了，现在先保存在这里吧。
+
+
+
+/* test doc */
+//two function ,help devolopmenter to get element's position.
+CommonForm = {};
+CommonForm.getWH = function(e){
+	var t = DOMhelp.getTarget(e);
+	//show width,height
+	return {
+		width:t.clientWidth,
+		height:t.clientHeight
+	}
+}
+CommonForm.getCoordinate = function(e){
+	var t = DOMhelp.getTarget(e);
+	ori_x = t.offsetLeft;
+	ori_y = t.offsetTop;
+	cur = t.offsetParent;
+	while(cur != null){
+		ori_x += cur.offsetLeft;
+		ori_y += cur.offsetTop;
+		cur = cur.offsetParent;
+	}
+	return {
+			left:ori_x,
+			top:ori_y
+		}
+}
+//this can search first child of wanted tag name(nodeName) of parent element.
+CommonForm.search_tag = function(root,tag){
+	if(root.tagName.toLowerCase() == tag.toLowerCase())	
+		return root;
+	var temp = root.childNodes;
+	for(var i=0;i<temp.length;i++){
+		if(temp[i].nodeType != 1)continue;
+		var found = CommonForm._width_s(temp[i],tag);
+		if(found)
+			return found;
+		found = CommonForm._deep_s(temp[i],tag);
+		if(found)
+			return found;
+	}		
+	return false;
+}
+/* deep first search */
+
+CommonForm._deep_s = function(root,tag){
+	if(root.tagName.toLowerCase() == tag.toLowerCase())
+		return root;
+	while(root.firstElementChild!=null)
+		return CommonForm._deep_s(root.firstElementChild,tag);
+	return false;	
+}
+CommonForm._width_s = function(root,tag){
+	while(root.nextElementSibling!=null && root.tagName.toLowerCase() != tag.toLowerCase()){
+		root = root.nextElementSibling;
+	}
+	return root.tagName.toLowerCase() == tag.toLowerCase() ? root : false;
+}
+
+CommonForm.makeForm= function(){
+
+};//empty now.
+
+
+这次是因为懒得打开网络。先存在这里吧，费了一天时间。还是有些小问题，不知为何以body为基准，找不到元素？
+
+
+117.79.93.208 
+117.79.93.197
+117.79.157.237
+116.246.38.174
+116.246.38.174
+42.121.68.213
+42.121.68.213
+169.254.134.236 ## vmnet1
+111.161.49.234 ## QQPCRTP.exe
+
+无线局域网适配器：无线网络连接
+本机IP ： 192.168.0.104
+MAC： 00-1C-BF-70-52-FA
+
+
+自从解决离线检测问题，事情又进了一步了。为什么要分辨出“在线”，“离线”两种情形。对于数据库的准确和业务流程有什么影响吗？
+员工盘点时，先隔离出一段区域，这要根据上级要求，时间量，数据基础环境等要素。
+每输入一条记录，需要粘贴条码或自制标签。粘贴的东西，指示两点：第一，本件商品已经盘点过了；第二，商品的ID号是多少，如果以前未建帐的，意味着新建。
+设想一种最复杂的情形。
+员工的盘点工作分为两段，先是离线状态，盘点了一堆商品，但盘存任务并没有结束，此时员工的手机里有缓存的数据。过了几日，员工在线，没有提交缓存（可能是疏忽了），开始在线盘点，由于标签的指示，员工续接上前段的工作，这时是在线盘点，每条记录都被记入服务器。
+最后，员工提交了缓存数据。
+假设员工实际开始盘点时缓存的数据的pancun_id,和record_time落后于后来在线的数据。
+那么员工要查询某一时段，自己的盘点记录就需要记住这个事实。
+当员工在线，离线的交替达到我们称为频繁的程度，靠记忆去修正谁先谁后，就不太可能了。
+我们关注点在于是否完成了盘点全部商品？每种数量是多少？盘点数据的有效时间（提交时间）是什么时候？盘点的员工是谁？
+以上所称的“交替带来的混乱”对于查询某一时间段员工的劳动绩效有影响，但并不影响盘点流程与我们的关注点。因为标签成了区别“有/无”盘存的唯一标志。我们看到没有标签的商品，就是剩余的工作量。
+致命的是统计时，员工的手机缓存并没有提交。所以，真正重要的是设立一个截止时间，检查每台手机的缓存是否为空，否则提交。手机的缓存最大容量是5M，但考虑其它应用的占用情况，应该限制为1M（＝1000*1000bytes,1条记录加上其格式，大约100byte,故1M约合10000条记录）。容量基本没有问题，对时间要限制，不能太长。
+
+今天是最后准备阶段的一天。要完成：
+一，完善盘点表及关联表的结构schema.
+	员工基础信息表workerbase
+	CREATE TABLE "workerbase"(
+	workerno integer not null unique,
+	name text not null,
+	login_name text not null unique,
+	password text,
+	notebook_path text,
+	email text,contact text default "",
+	first_date text,
+	last_date text
+	);
+	其中password的实现看引用文章（下面）
+
+	“sqlite3里的加密实现。
+	
+	sqlite3没有内建的加密实现。
+	为了本项目的任务，我们可以简单化地使用python的md5库。
+		>>> import md5
+		>>> def md5sum(plain-text):
+		 ....                   return md5.md5(plain_text).hexdigest()   ## hexdigest是hex（十六进制）digest(校验和）
+
+	结合SQL语句
+
+		sql= 'update workerbase set password=? where workerno=1'
+		data =( md5sum('something'),)
+		cursor.execute(sql,data)
+​
+	”
+	
+		b34bcfcabb1d17e0d3bc2cbca7156422         ＝＝＝＝＝＝＝＝ worker01:java12354(plain)
+		e7db635b864cd86b69042d9347de6c71        ================= loofah:loo fah(plain)
+
+
+	盘存员工登录事件统计表(login)schema
+	
+	CREATE TABLE `login` (
+	id integer not null primary key,
+	workerno integer not null,
+	login_time text not null,
+	last_active text not null,
+	diff_time text not null,
+	mac text);
+
+
+
+
+	盘存表（pancun）的schema:
+
+	CREATE TABLE "pancun"(
+	pancun_id integer not null primary key,
+	partnumber integer not null,
+	store_pos text not null,
+	photo_url text,
+	count integer not null,
+	size_color text,
+	memo text,
+	workerno integer not null,
+	offline integer not null default 0,
+	record_time text not null default(strftime('%s','now','localtime'))
+	);
+
+
+	商品基础信息表（goodbase)schema
+
+	CREATE TABLE goodbase (
+	id integer primary key,
+	old_id text not null unique,
+	item_name text not null unique,
+	contains integer not null default 0,
+	original_price integer not null default 0,
+	sale_price integer not null default 0,
+	photo_url text default 'not yet',
+	history text default 'not yet',
+	update_time text default(strftime('%s','now','localtime'))
+	);
+
+
+
+关于上面两张表的时间类型字段，原则是以服务器上的时间为准。login_time和record_time(pancun）是服务器的时间，并校验当前登录手机的系统时间，给出提示。两值都为interge值。离线应用时，时间为手机系统的时间，提交时列出与服务器时间的差值（integer).
+
+二，登录。输入员工号码/口令对，后台取出存储的数据进行校验，通过后允许登录，并且要校验手机系统的时间与服务器时间的差异，提示相差时间，并不采取措施，因为无法进入手机的系统修改。
+
+三，商品名字段输入采用联想提示，关联商品基础信息表。有两种可能，一种是从联想中选取到正确的商品名称，继续盘点动用；另一种是联想中没有此种商品，需要新建。后一种情况，又分化为两种情况：1,联想中没有此种商品的基础信息，是因为联想数据没有与服务器同步；2,服务器也没有建立此商品的基础信息。对于这两种情况，目前简化为新建临时商品信息。数据库管理员必须随后择机处理。这也是上面为什么会有一张临时商品基础信息表的原因。
+
+	
+=========================================================================================================
+菠萝手机横向569,纵向320；
+ITOUCH与三星一样都是横向480,纵向320（三者都一样）。所以手机网页应该以320宽度为设计起点。
+
+=========================================================================================================
+关于JS文件---CommonForm,中核心的是addWidget,看来，各种控件的构成并不相同。
+input不论是type=text,还是type=submit，基本是一个单值的控件。而select,radio,checkbox则是多值的，虽然最后radio只取一个值，但备选的值是多值的，
+这是它们根本上的不同之处。表单里经常有“对”的概念，如label和input,p和checkbox等，label,p不算控件，但对于表单来讲，也是不可少的，所以广义上，
+还是把它们当成一个widget.
+必要参数：
+1,tagname
+2,value(s?)
+3,value for what(directly or option)
+3,name
+4,desc
+5,listener
+6,position
+
+
+1,tagname
+2,value
+3,option
+4,name
+5,desc
+6,listener
+7,position(layout)
+
+可见这很复杂，往往由html端发起较为合适。要想脚本化，必须舍弃一些选择，单纯地制作一个不易出问题的表单控件，和pair.
+makeFormPair
+makeInputWidget
+makeSuitWidget
+boundWidget
+另外，把这些部件绑定在一起，需要compose方法的灵活性要更强。可以compose(part)，compose(desc,widget)
+compose(part1,part2)
+compose(compose(part1),compose(part1,part2))
+要做到这点，compose的返回值是一个组件。最后组成一个表单。
+
+
+如果compose能做到这点，前面的几个maeXXXX方法似乎可以合成一个。就是makeWidget.由它里面调用compose一次或几次。
+function compose(ele){//单参。ele是一个DOM节点元素。
+//这个方法的预定目标是将一个INPUT或其它DOM节点元素，作为form的孩子节点。
+//更重要的是，form添加控件的顺序。如果多次调用compose的单参形式方法,它的后果是在form的DOM树中，顺序地加入
+//控件。如<label for="ele1">name:<input type="text" id="ele1" name="name" /></label>
+	label = document.createElement('label');
+	label.for=ele.id;
+	this.form.appendChild(label);
+	this.form.appendChild(ele);
+.........思路一改再改，希望是好事。
+。。
+在把表单做成一个模板，还是以全部DHTML的方式去生成。之间犹豫不决。
+前者较清晰，也符合html+css+javascrit+Server的范畴惯例。
+后者对离线的支持较好。因为模板是需要服务器解析的。当然，如果发明一个JS来解析的模板也是可以的。
+如
+simple_form = '<form name="?"><p>input name: <input type="?" name="?" id="input1" /></p><input type="submit" /></form>'；
+form1 = document.getElementById("form1");
+form1.innerHTML = simple_form;
+
+这就是一个最简化的模板的全部代码。
+
+
+
+离线时，已经保存了这个模板所在的JS文件，我们假设它叫form.js.
+通用的应用页静态页面是app1.html.
+我们这样生成这张form.
+<head>....<script src="form.js"></script></head>
+<!-- 下面是一个容器-->
+<div id="form1"></div>
+
+我们分析一下上面的代码。这张form中有写死的，有活的。
+写死的是form1这个变量，对应的网页中必须有id为form1的容器。作为数据的input的数量是1个，如果需要采集两个input，这个模板就不能用了。还有，
+form的属性也很难活用。它对应的服务器脚本是哪一个？它的提交方式是什么？，它的提交要不要监听，监听的函数又是哪一个。
+我做了很多次制造模板的工作，最后发现，以动态形式来生成表单，没有节省什么代码，也做不到通用。
+难道还是回到html+css+javascript各自为政的状态吗？
+
+另一种，就是把整个表单部分，以DHTML形式生成。全部交给javascript,这样，用不着约定ID等。这才是真正的模板。
+HTML端：
+	引入脚本，引入CSS，定义一个容器，有一定的灵活性可以添加一些除表单之外的东西。
+CSS端：
+	相对较易写成通用的，只要注意目标浏览器的视口大小基本就没有什么问题了。
+JS端：
+	一种类型的FORM，就是一个JS文件。比如上面的适合采集单个数据的，就可以是一个模板，提交方式以GET为最佳。
+
+好，事情就这么定下来，下午就用新的JS模板形式，把原先的input_and_getScript.utf8.html替换下来。
+
+起名：pandian_form.js
+/* 
+* filename: pandian_form.js
+
+*
+* total 3 forms.
+* every form need no action,id,method.we will ajax it.
+*
+*/
+
+//form1:get good_name,good_id.
+form1 =  '<form name="form1"><p> Input Good's keyword or full name: <input type="text" name="good_
+=========================================================================================================
+终于取得突破进展---------Widget类 2013-12-3
+=========================================================================================================
+
+原型在此：
+/*
+* Widget is a wrapper of HTML-FORM-CONTROL-ELEMENT 
+* it can wrapp <input> <select> <button> <textarea>
+*
+*/
+function Widget(tagName,fieldName,widget_type){
+	this.tagName = tagName.toLowerCase();
+	this.fieldName = fieldName.toLowerCase();
+	if(widget_type)
+		this.widget_type=widget_type.toLowerCase();
+	else this.widget_type='';
+	if(this.widget_type==='checkbox' || this.widget_type==='radio')
+		this.domNode = document.createElement('div');
+	else{
+		this.domNode = document.createElement(tagName);
+		this.domNode.name = this.fieldName;	
+		this.domNode.type=widget_type;
+	}
+};
+Widget.prototype = {
+	boundFunc:function(eventType,func){
+		DOMhelp.addEvent(this.domNode,eventType,func,false);
+	},
+	boundDesc:function(descText,descTagName){
+		if(descTagName){
+			var descElm = document.createElement(descTagName);
+			descElm.appendChild(document.createTextNode(descText));
+			descElm.appendChild(this.domNode);
+			this.domNode = descElm;
+		}else{//it is button widget.
+			if(this.tagName!=='button')return;
+			this.domNode.appendChild(document.createTextNode(descText));
+		}
+		
+	},
+	//options is an Array.
+	//case input type=text or button ,options=value(single)
+	//case radio,checkbox,select options=options
+	boundOptions:function(options,defaultIndex){
+		if(defaultIndex==null)
+			defaultIndex=0;	
+		switch(this.tagName){
+			case 'select':
+				for(var i=0;i<options.length;i++){ 
+					if(defaultIndex===i)
+						this.domNode.options.add(new Option(options[i],options[i],true,true));
+					else
+						this.domNode.options.add(new Option(options[i],options[i]));
+					
+				}
+				break;
+				
+			case 'input':
+				switch(this.widget_type){
+					case 'checkbox':
+					case 'radio':
+						for(var i=0;i<options.length;i++){ 
+							var element = document.createElement('input');
+							element.name=this.fieldName;
+							element.value=options[i];
+							element.type=this.widget_type;
+							if(i===defaultIndex)
+								element.checked="checked";
+							this.domNode.appendChild(element);
+							this.domNode.appendChild(document.createTextNode(options[i]));
+						}
+						break;
+					case 'button':
+					case 'text':
+						this.domNode.value=options;
+						break;
+					
+					default:
+						break;
+				}//inner switch block (end)
+				break;
+			case 'button':
+				this.domNode.value=options;
+				break;
+			case 'textarea':
+				this.domNode.value = options;
+				break;
+			default:
+				break;
+		}//switch block end.	
+	},
+	setDomNodeAttrs : function(attrs){
+		for(var i in attrs){
+			this.domNode.setAttribute(i,attrs[i]);	
+		}	
+	}	
+};
+
+
+这个Widget是如此神奇，静态页面中，寥寥几行就可生成功能齐全的表单控件，我说今天是如有神助。
+再完善完善，应该成为CommonForm的核心类和工具。
+
+
+
+
+=========================================================================================================
+CREATE TABLE goodbase (id integer primary key,
+old_id text not null unique,
+item_name text not null unique,
+contains integer not null default 0,
+original_price integer not null default 0,
+sale_price integer not null default 0,photo_url text default 'not yet',
+history text default 'not yet',
+update_time text default(strftime('%s','now','localtime')));
+
+CREATE TABLE "pancun"(pancun_id integer not null primary key,partnumber integer not null,store_pos text not null,count integer not null,size_color text,memo text,workerno integer not null,offline integer not null default 0,record_time text not null default(strftime('%s','now','localtime')));
+
+
+CREATE TABLE "workerbase"(workerno integer not null unique,name text not null,login_name text not null unique,password text,notebook_path text,email text,contact text default "",first_date text,last_date text);
+
+CREATE TABLE `login` (id integer not null primary key,
+workerno integer not null,
+login_time text not null,
+last_active text not null,
+diff_time text not null,
+mac text);
+
+
+
+==========================
+==========================================
+========================================================
+
+继续改进input_and_getScript.utf8.html
+目标：
+1,把JS代码从html中剥离；
+
+原先的input_and_getScript页，JS代码中一部份已经转成了类Widget的方法，还有一部分控制视图的方法，需要简化和组合。
+我们为这个页做一个JS模板，叫pancun.js.
+
+2,获得数据从动态的HTTP.getTextWithScript()方法，变为普通的javascript src。
+
+这个问题比想像当中要简单，导出sqlite3表goodbase的选定列，记得要先.separator ",",即以"，"号为分隔符。然后在python shell里，把前一步制作的CSV文件，用fp.read()读入，存入一个大字符串。再引入json模块，把json.dumps()的结果，写进最后的目标文件-----goodbase.js,加在goodbase.js文件最前面“var data="这些字。相当于一条赋值语句var data="...."（一大串）。
+HTML页面中就可以以<script src="goodbase.js"></script>来取得这些来自sqlite3的数据了。
+
+3,实现数据库插入。约定的字段是item_id
+	pancun_id  服务器自行生成
+	partnumber 客户端提供
+	store_pos 客户端提供
+	photo_url 忽略（本页）
+	count 客户端提供
+	size_color 忽略
+	memo text 忽略
+	workerno 客户端提供
+	offline 客户端提供
+	record_time 服务器自行生成
+
+可见，partnumber,store_pos,count,workerno,offline共五个字段，属于客户端责任，五个之中的workerno由脚本取得注册页面表单里的数据，检测是否为正常登录，最后保存在cookie或是sessionStorage里的数据。而offline由ifonline()函数和navigator.onLine进行判断。真正需要手工输入的只有partnumber,store_pos,count三个字段，并且，这三个字段都有相应的联想或便捷机制，也是相当人性化的。
+
+先进行一个插入试验
+insert into pancun (partnumber,store_pos,count,workerno,offline) values(...)
+
+这是插入的结果，我们看到，pancun_id是自动产生的，record_time也是自动产生的，忽略的部份可以以后再update.
+在我们的规划之中，photo_url是由专人一次性拍摄产品图片，再批量更新该字段，所以它都是update产生。
+
+1          	pancun_id
+1		partnumber
+east1		store_pos
+4		count
+空		photo_url
+空		size_color
+空		memo
+501		workerno
+0               offline 
+1386424386      record_time
+
+
+现在必须处理的是：
+1,应用page里需要一个选择仓位的复合checkbox
+它的原理是，一共3个radio隐藏2个，只出现一个radio,它是供选择楼下/楼上的radio,只有两个值，一个是楼下，一个是楼上。
+当选择其中之一时，触发第2个radio,它的值是东/西/近东/近西，提供方位（纵坐标），选择后，触发第3个radio,是1,2,3,4.。。
+三次选择之后，我们最后取得了仓位的值，如 楼下-近东-第3 仓位。
+
+
+
+。。。。。。。好了，现在算是初步搞成了。把插入的逻辑实现了。但表单的控制流还不够智能，也缺乏整理。
+
+困难的还是分页的JS操作。
+从服务器分页是最合理的，但是，考虑离线应用，还是应该用JS分页。
+heilmann的那个示例还是有些复杂，它的原理是，一次性读取表格，以固定的行数为一页，隐藏起其它的页面，只显示当前页。用一个动态的链接来指示“上一页”，“下一张”的信息。
+我们先来暖场吧。
+还是ano.html.
+到哪里去搞一个大表呢。我们早已经有了一个现成的JS文件，就是从goodbase里提取的那个goodbase.js。
+
+
+
+
+
+好，大表搞起来不费什么劲，还是<script src="goodbase.js"></script>这个goodbase.js文件，整个是一个赋值语句，赋给goodbase.
+lines=goodbase.split(',')
+这就是一张大表了。
+
+真正费劲的是确定CURRENT.
+给我的一个教训是：看不见的东西依然不可忽略。
+CURRENT是什么，它是当前视图，比如表中从第24行到48行，CUREENT就是20.我们点NEXT，要它映射48到72行（LIMIT是24).点PREVIOUS,就要它映射0-23行。这才是同步。
+只有调试，能消除头脑中的视差。
+注意以下对称的四句：
+show(theBody,CURRENT+LIMIT);//当点nextLink
+CURRENT+=LIMIT;
+	
+show(theBody,CURRENT-LIMIT);
+//当点previousLink时。
+CURRENT-=LIMIT;
+	
+我先写作show(theBody,CURRENT);//当点nextLink
+就错了。
+这是不是就是“加1错误”呢？
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0" />
+<meta charset="utf-8" />
+<title>PageNavigator</title>
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<script src="/static/jses/goodbase.js"></script>
+<style>
+button{
+	background-color:white;
+}
+
+</style>
+
+</head>
+<body>
+<!--
+I Found My Cadillac right-front wheel has a stick,I have collected it.
+after today ,will watch carefully at this wheel's status.(2013-12-5 11:33:00)
+currently status: 240pa.ater some while(2.4KM),will raise to 244pa
+contains wheel's staus is 236pa,also will raise to 240pa after running some while.
+(ater a day)
+today my child want '14 mouses' paint,i ordered it,but when near finish , service is crash.memo:1,14 spend winter;2,14 dig s-potato
+2013 12 6
+2013/12/7 wheel is ok till today.the wheel we cared is 240-244pa(before),other is 236pa-240pa
+-->
+<table id="theTable" border="1">
+<thead>
+<tr><th>id</th><th>oldid</th><th>item_name</th></tr>
+</thead>
+<tbody id="theBody">
+</tbody>
+</table>
+<button id="next">Next</button>
+<button id="previous">Previous</button>
+<script>
+function show(tbody,start){
+	tbody.innerHTML = '';
+	for(var i=start;i<start+LIMIT;i++){
+		var line = lines[i].split(',');//3 fields.
+		tbody.innerHTML += '<tr><td>' + [line[0],line[1],line[2]].join('</td><td>') + '</td></tr>';
+	}	
+}
+function init(){
+//define some constant.
+lines = goodbase.split('\n');
+theTable = document.getElementById('theTable');
+theBody = document.getElementById("theBody"); 
+if(!theTable || !theBody)return;
+CURRENT = 0;
+LIMIT = 24;//only show LIMIT lines each page.
+TOTAL = 100;
+//make link 'next'
+countP = document.getElementById("count");
+nextButton = document.getElementById('next');
+previousButton = document.getElementById('previous');
+	function slide(e){
+		var theButton = DOMhelp.getTarget(e);
+		if(theButton.textContent==='Next'){//it is next orient.
+			if(CURRENT>=TOTAL-LIMIT){
+				theButton.style.backgroundColor='grey';
+			}else{
+				theButton.style.backgroundColor='white';
+				show(theBody,CURRENT+LIMIT);				
+				CURRENT+=LIMIT;
+			}
+		}
+		else if(theButton.textContent==='Previous'){
+			if(CURRENT<LIMIT){
+				theButton.style.backgroundColor='grey';
+			}else{
+				theButton.style.backgroundColor='white';
+				show(theBody,CURRENT-LIMIT);
+				CURRENT-=LIMIT;
+			}
+		}
+		else{
+			alert('invalid argument.');
+		}
+	}//end of slide().
+	DOMhelp.addEvent(previousButton,'click',slide,false);	
+	DOMhelp.addEvent(nextButton,'click',slide,false);	
+	show(theBody,0);
+}//end of init().
+window.onload=init();
+</script>	
+</body></html>
+
+
+即使这样，依然有问题！
+
+运行一下代码，发现previous这个button,它在不能显示新的页面时，还要击一下才会变色，这是滞后了。更改它的逻辑成当＝＝0时变色，但依然显示最后一张表。
+同样
+对于next来说，也要增加一个判断，当它的起始数已经超过了。
+还有一种情况是两个按钮同时变灰（不可用）。这是因为一旦超过我们限定的起始数，按钮变灰，但还是需要一种恢复机制，当范围脱离了限定区域时，应该重新变回本色（白）。
+合并几种情况，我们得到一个基本能够正常工作的版本，如下：
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0" />
+<meta charset="utf-8" />
+<title>PageNavigator</title>
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<script src="/static/jses/goodbase.js"></script>
+<style>
+button{
+	background-color:white;
+}
+
+</style>
+
+</head>
+<body>
+<!--
+I Found My Cadillac right-front wheel has a stick,I have collected it.
+after today ,will watch carefully at this wheel's status.(2013-12-5 11:33:00)
+currently status: 240pa.ater some while(2.4KM),will raise to 244pa
+contains wheel's staus is 236pa,also will raise to 240pa after running some while.
+(ater a day)
+today my child want '14 mouses' paint,i ordered it,but when near finish , service is crash.memo:1,14 spend winter;2,14 dig s-potato
+2013 12 6
+2013/12/7 wheel is ok till today.the wheel we cared is 240-244pa(before),other is 236pa-240pa
+-->
+<table id="theTable" border="1">
+<thead>
+<tr><th>id</th><th>oldid</th><th>item_name</th></tr>
+</thead>
+<tbody id="theBody">
+</tbody>
+</table>
+<button id="previous">Previous</button>
+<button id="next">Next</button>
+<script>
+function show(tbody,start){
+	tbody.innerHTML = '';
+	for(var i=start;i<start+LIMIT;i++){
+		var line = lines[i].split(',');//3 fields.
+		tbody.innerHTML += '<tr><td>' + [line[0],line[1],line[2]].join('</td><td>') + '</td></tr>';
+	}	
+}
+function init(){
+//define some constant.
+lines = goodbase.split('\n');
+theTable = document.getElementById('theTable');
+theBody = document.getElementById("theBody"); 
+if(!theTable || !theBody)return;
+CURRENT = 0;
+LIMIT = 25;//only show LIMIT lines each page.
+TOTAL = 100;
+//make link 'next'
+countP = document.getElementById("count");
+nextButton = document.getElementById('next');
+previousButton = document.getElementById('previous');
+	function slide(e){
+		var theButton = DOMhelp.getTarget(e);
+		var anotherButton;	
+		if(theButton.textContent==='Next'){//it is next orient.
+			//get another button:previous.
+			anotherButton = theButton.previousElementSibling;
+			if(CURRENT>=TOTAL-LIMIT){
+				theButton.style.backgroundColor='grey';
+			}else{
+				show(theBody,CURRENT+LIMIT);				
+				CURRENT+=LIMIT;
+			}
+			if(CURRENT>LIMIT)
+				anotherButton.style.backgroundColor='white';
+		}
+		else if(theButton.textContent==='Previous'){
+			//get closestSibling(next button)
+			anotherButton = theButton.nextElementSibling;
+			if(CURRENT>=LIMIT){
+				if(CURRENT==LIMIT)
+					theButton.style.backgroundColor='grey';
+				show(theBody,CURRENT-LIMIT);
+				CURRENT-=LIMIT;
+			}else{
+				theButton.style.backgroundColor='grey';
+			}
+			if(CURRENT<TOTAL-LIMIT)
+				anotherButton.style.backgroundColor='white';
+		}
+		else{
+			alert('invalid argument.');
+		}
+	}//end of slide().
+	DOMhelp.addEvent(previousButton,'click',slide,false);	
+	DOMhelp.addEvent(nextButton,'click',slide,false);	
+	show(theBody,0);
+}//end of init().
+window.onload=init();
+</script>	
+</body></html>
+
+
+
+
+
+可以总结一下了：
+1,JS分页需要的变量是页面限制行数，总行数，当然显示出来，需要一个显示的方法，本例中是show().还需要向前和向后的按钮控件。
+2,原理是以一下当前起始行数为基准，向前按钮被击中时，显示当前行+页面限制行数，向后按钮被击中时，显示当前行-页面限制行数。
+3,难点在于当到达0行时，要有一个判断代码，使控件的状态发生变化（一般是变色提示或干脆隐藏），到达总行数时，另一个控件也同样机理地变化。有一种情况是总行数并不是限定行的整数倍数，余下若干行数，所以，show方法里要进行判断，看是否超过总行数。
+
+
+
+/*
+*
+* CommonForm dead.
+*
+* Now is CommonTable.	version0.1
+* 
+
+*
+*/
+function CommonTable(data){//need data is 'CSV' format.
+	this.data = data;
+	this.table = null;//Dom Node.
+	this.tbody = null;
+	this.thead_desc = null;
+	this.isPageNav = false;
+}
+CommonTable.prototype = {
+	setTableHead:function(thead_desc){
+		if(thead_desc instanceof Array != true){
+			alert('thead argument is invalid.');
+			return;
+		}
+		else{
+			this.thead_desc = thead_desc;
+		}
+	},
+	init : function(containerId,thead_desc){//thead is 'field1,field2...'(string)
+		container = document.getElementById(containerId);
+		this.setTableHead(thead_desc);
+		if(!container || !this.thead_desc)return false;
+		//setup thead.
+		this.table = document.createElement('TABLE');
+		this.table.border="1";
+		thead = document.createElement('THEAD');
+		thead.innerHTML = '<thead><tr><th>' + this.thead_desc.join('</th><th>' + '</th></tr></thead>';
+		this.table.appendChild(thead);	
+		this.tbody = document.createElement('TBODY');
+		this.table.appendChild(this.tbody);
+
+		//append in DOM tree.
+		container.appendChild(this.table);
+		return true;
+	},
+	_show:function(start,end){//need data is 'CSV' format.
+		this.tbody.innerHTML = '';
+		for(var i=start;i<end;i++){
+			this.tbody.innerHTML += '<tr><td>' + this.data[i].split(',').join('</td><td>') + '</td></tr>';  
+		}	
+	},
+	fullShow:function(){
+		this._show(0,data.length);	
+	},	
+	pageShow:function(LIMIT,TOTAL){
+		var CURRENT = 0;
+		var nextButton = document.createElement('BUTTON');
+		nextButton.appendChild(document.createTextNode('Next'));
+		var previousButton = document.createElement('BUTTON');
+		previousButton.appendChild(document.createTextNode('Previous'));
+		this.table.parentNode.appendChild(previousButton);
+		this.table.parentNode.appendChild(nextButton);
+		DOMhelp.addEvent(previousButton,'click',this.slide,false);
+		DOMhelp.addEvent(nextButton,'click',this.slide,false);
+		function slide(e){
+			var theButton = DOMhelp.getTarget(e);
+			var anotherButton;	
+			if(theButton.textContent==='Next'){
+				//get another button:previous.
+				anotherButton = theButton.previousElementSibling;
+				if(CURRENT>=TOTAL-LIMIT){
+					theButton.style.backgroundColor='grey';
+				}else{
+					this._show(CURRENT+LIMIT,CURRENT+ 2*LIMIT);				
+					CURRENT+=LIMIT;
+				}
+				if(CURRENT>LIMIT)
+					anotherButton.style.backgroundColor='white';
+			}else if(theButton.textContent==='Previous'){
+				//get closestSibling(next button)
+				anotherButton = theButton.nextElementSibling;
+				if(CURRENT>=LIMIT){
+					if(CURRENT==LIMIT)
+						theButton.style.backgroundColor='grey';
+					this._show(CURRENT-2*LIMIT,CURRENT-LIMIT);
+					CURRENT-=LIMIT;
+				}else{
+					theButton.style.backgroundColor='grey';
+				}
+				if(CURRENT<TOTAL-LIMIT)
+					anotherButton.style.backgroundColor='white';
+			}else{
+				alert('invalid argument.');
+			}
+		}//end of innerFunc --- slide()
+	}
+};//prototype end
+
+
+上面暗含着两个错误，一个是，内部方法的this,并不是instance,所以要临时把this赋给一个变量，好在内部方法再次引用它，这个还是好办的一调试就知道了，chrome很直观啊。
+另一个则又是令人头痛的计数问题。
+由于我们写成了类的形式，_show这个辅助方法为了兼容fullShow和pageShow两种方法，是双参的，与ano.html页面写的是不一样，所以，起始行与终止行的关系易错。
+_show(start,end)调用时是：
+_show(CURRENT+LIMIT,CURRENT+2*LIMIT)
+特别容易出错的地方还在于判断
+if(CURRENT<TOTAL-LIMIT)要改成if(CURRENT<TOTAL-2*LIMIT)
+下面是运行成功的示例代码：
+
+
+
+
+/*
+*
+* CommonForm dead.
+*
+* Now is CommonTable.	version0.1
+*
+* 前提条件：
+* 一，HTML页面定义好了容器，并把容器的ID号传进INIT方法；
+* 二，需要格式化的DATA，如我们这个例子，DATA是从外部脚本文件（赋值语句）引入的，是CSV形式，每行之间用‘\n’分隔，共有三个字段，以','分隔。
+* 三，如果是分页显示的表格，需要表头描述，它是一个数组。如['姓名','年龄','职业','单位']这样。
+* 使用方法:
+	t = new CommonTable(goodbase);//生成instance对象
+	t.init(containerId,thead_desc);//需要先init，init会调用setTableHead.
+	//pageNav
+	t.pageShow(50,1000);//共显示1000行，每页显示50行。
+        //fullShow
+        //t.fullShow();//一次性显示，我在做实验时，忘了goodbase有近六千行，差点把chrome搞崩溃了。
+*	
+*
+*/
+function CommonTable(data,isPageNav){//need data is 'CSV' format.
+	this.data = data;
+	this.table = null;//Dom Node.
+	this.tbody = null;
+	this.thead_desc = null;
+	this.isPageNav = isPageNav||false;
+}
+CommonTable.prototype = {
+	setTableHead:function(thead_desc){
+		if(thead_desc instanceof Array != true){
+			alert('thead argument is invalid.');
+			return;
+		}
+		else{
+			this.thead_desc = thead_desc;
+		}
+	},
+	init : function(containerId,thead_desc){//thead is 'field1,field2...'(string)
+		container = document.getElementById(containerId);
+		this.setTableHead(thead_desc);
+		if(!container || !this.thead_desc)return false;
+		//setup thead.
+		this.table = document.createElement('TABLE');
+		this.table.border="1";
+		thead = document.createElement('THEAD');
+		thead.innerHTML = '<thead><tr><th>' + this.thead_desc.join('</th><th>') + '</th></tr></thead>';
+		this.table.appendChild(thead);	
+		this.tbody = document.createElement('TBODY');
+		this.table.appendChild(this.tbody);
+
+		//append in DOM tree.
+		container.appendChild(this.table);
+		return true;
+	},
+	_show:function(start,end){//need data is 'CSV' format.
+		this.tbody.innerHTML = '';
+		for(var i=start;i<end;i++){
+			if(i<0 || i>this.data.length)break;
+			this.tbody.innerHTML += '<tr><td>' + this.data[i].split(',').join('</td><td>') + '</td></tr>';  
+		}	
+	},
+	fullShow:function(){
+		this._show(0,data.length);	
+	},	
+	pageShow:function(LIMIT,TOTAL){
+		var CURRENT = 0;
+		var nextButton = document.createElement('BUTTON');
+		nextButton.appendChild(document.createTextNode('Next'));
+		var previousButton = document.createElement('BUTTON');
+		previousButton.appendChild(document.createTextNode('Previous'));
+		this.table.parentNode.appendChild(previousButton);
+		this.table.parentNode.appendChild(nextButton);
+		DOMhelp.addEvent(previousButton,'click',slide,false);
+		DOMhelp.addEvent(nextButton,'click',slide,false);
+		this._show(0,LIMIT);
+		var thisInstance = this;
+		function slide(e){
+			var theButton = DOMhelp.getTarget(e);
+			var anotherButton;	
+			if(theButton.textContent==='Next'){
+				//get another button:previous.
+				anotherButton = theButton.previousElementSibling;
+				if(CURRENT>=TOTAL-2*LIMIT){
+					theButton.style.backgroundColor='grey';
+				}else{
+					thisInstance._show(CURRENT+LIMIT,CURRENT+ 2*LIMIT);				
+					CURRENT+=LIMIT;
+				}
+				if(CURRENT>2*LIMIT)
+					anotherButton.style.backgroundColor='white';
+			}else if(theButton.textContent==='Previous'){
+				//get closestSibling(next button)
+				anotherButton = theButton.nextElementSibling;
+				if(CURRENT>=2*LIMIT){
+					if(CURRENT==LIMIT)
+						theButton.style.backgroundColor='grey';
+					thisInstance._show(CURRENT-2*LIMIT,CURRENT-LIMIT);
+					CURRENT-=LIMIT;
+				}else{
+					theButton.style.backgroundColor='grey';
+				}
+				if(CURRENT<TOTAL-2*LIMIT)
+					anotherButton.style.backgroundColor='white';
+			}else{
+				alert('invalid argument.');
+			}
+		}//end of innerFunc --- slide()
+	}
+};//prototype end
+
+
+好了，现在算是有个家伙事儿了。但未来的变化点在哪里呢，当然表的字段是任意的，如果是5列的，我们的示例能够承受吗？
+我们现在就试着把pancun这个表用JS分页。
+
+
+
+#! C:\Python27\python.exe
+#
+import sqlite3
+import json
+cxn = sqlite3.connect("together.db")
+cxn.text_factory = str
+cur = cxn.cursor()
+cur.execute('select * from pancun')
+fp = open('ano.txt','w')
+for i in cur.fetchall():
+	fp.write(','.join([str(x) for x in list(i)]) + '\n')
+fp.close()
+cur.close()
+cxn.close()
+# now we reread data from 'ano.txt'
+fp = open('ano.txt','r')
+bigstr = fp.read() 
+fp.close()
+# then we reuse the file(ano.txt) third time.
+fp=open('ano.txt','w')
+fp.write('var pancun=' + json.dumps(bigstr))
+fp.close()
+print 'right!'
+
+
+这个脚本虽小，确是实现了功能的。它导入又导出，还是json形式的，我们接下来会用到它。非常方便，命令行运行python filename.py就可以做到。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

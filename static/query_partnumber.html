@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0,width=device-width" />
+
+<!-- include base css -->
+<link rel="stylesheet" media="screen" href="/static/csses/base.css" type="text/css" />
+
+<!-- include DOMhel.js,so this document can use a global var:***DOMhelp*** -->
+<script src="/static/jses/DOMhelp.js"></script>
+
+<!-- include HTTP.js,so this document can use a global var: ***HTTP*** -->
+<script src="/static/jses/HTTP.js"></script>
+
+<title> Query Good Base Info</title>
+<style type="text/css">
+	#sel_partnumber{
+		padding:0px;
+		margin:0px;
+		width:200px;
+		color:#f4f4f4;
+		text-align:left;
+	}
+</style>
+
+<!-- below is JSONP's callback function -->
+<script>
+	function query_partnumber(text){
+//text from server via JSONP,select#sel_partnumber show text
+		var sel_partnumber = document.getElementById("sel_partnumber");
+		sel_partnumber.innerHTML=text;
+		sel_partnumber.setAttribute('size','8');
+	}
+</script>
+</head>
+<body>
+<form name="querygoodbase" action="#" method="GET">
+	<p><input type="text" name="partnumber" required />input 'partnumber' and query.</p>
+	<select id="sel_partnumber">
+	<option value="">wait response...<option>
+	</select>
+	<br />
+<!-- default submit will be cancel,instead of JSONP -->
+	<input id="submit" type="submit" onclick="jsonp();return false;"/> 
+	<br />
+</form>
+
+<script>
+//client-side needs:
+//1,cancel default submit action,instead of JSONP method.
+//2,addEventListener to input#submit,when click,will invokes jsonp().
+
+// server-side needs:
+// 1,variable is 'SERVER_HOSTNAME?query=VARIABLE' ,split QUERY_STRING with 'query'.
+// 2,wrapper every record with <option value="VALUE">VALUE</option>
+
+function jsonp(){
+	// get input's value
+	var elt = document.getElementById("partnumber");
+	value = elt.value; 
+	// send JSONP.	
+	HTTP.getTextWithScript(value,query_partnumber,'/query_partnumber.py');
+}
+</script>
+
+</body></html>

@@ -1,0 +1,1 @@
+BASE_TEMPLATE=r'''<!DOCTYPE html> <html lang="en"> <head> <meta name="viewport" content="initial-scale=1.0,width=device-width,maximum=1.0,scale=" /> <meta charset="utf-8" /> <title>Cgi Response Page</title> <link rel="stylesheet" href="/static/csses/base.css" media="screen" /> </head> <body> %s <span class="footer">--- end ---</span> </body></html>'''

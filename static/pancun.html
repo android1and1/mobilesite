@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<meta charset="utf-8" />
+<title>PanCun And Register</title>
+<!-- include css -->
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/static/csses/CommonForm.css" media="screen" />
+
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<script src="jses/goodbase.js"></script>
+<script src="jses/user.js"></script>
+<script src="jses/online.js"></script>
+
+<style>
+.radiobox{
+	margin-bottom:1.7em;
+}
+.radiobox input{
+	margin-left:2em;
+}
+
+</style>
+</head>
+
+<body>
+<form name="form1" class="CommonForm">
+<h3><a name="top">
+Step 1:	Search Good's Item Name
+</a></h3>
+<div id="suggestBox" class="suggestBox"></div>
+<!--   hide partnumber field -->
+<input type="text" class="hide" name="partnumber" />
+
+<h3><a name="middle"> Step 2: Amount & Position </a></h3>
+
+<div id="amountDiv"></div>
+<div id="store_posDiv">
+	<div id="floor" class="radiobox">choice floor: </div>
+	<div id="orient" class="radiobox">choice orient: </div>
+	<div id="order" class="radiobox">choice order: </div>
+</div>
+<input type="text" value="" class="hide" name="store_pos"/>
+<h3><a name="bottom">
+Step 3: Review & Commit 
+</a></h3>
+<div id="commitDiv"></div>
+</form>
+
+<script>
+//server_data from goodbase(src)
+server_data = goodbase.split('\n');//now data became an Array.
+//check if offline
+var online = ifonline() && navigator.onLine;
+var offline = !online;
+//get user
+var user = DOMhelp.getACookieValue('user');	
+
+//start make form's widget.
+ 
+var form1 = document.form1;
+var suggestBox = document.getElementById("suggestBox"); 
+var w_search = new Widget('input','item_name','text');
+w_search.setDomNodeStyles({'line-height':'2.0em','fontSize':'1.45em'});
+w_search.boundFunc('change',suggest);
+w_search.boundDesc('','p');
+form1.insertBefore(w_search.domNode,suggestBox);
+
+// put a 'reset' button aside input-control-widget.
+var w_reset1 = new Widget('button','w_reset1','button');
+w_reset1.setDomNodeStyles({'marginLeft':'.78em'});
+w_reset1.boundFunc('click',function(e){form1.item_name.value='';suggestBox.innerHTML='';e.preventDefault();});
+w_reset1.boundDesc('Reset');
+form1.insertBefore(w_reset1.domNode,suggestBox);
+
+// put a 'next' button aside input-control-widget.
+var w_next2amount = new Widget('button','next2amount','button');
+w_next2amount.boundFunc('click',function(e){
+				document.location.href="#middle";
+				//document.form1.amount.focus();
+				//e.preventDefault();
+				DOMhelp.cancelClick(e);
+			});
+w_next2amount.setDomNodeStyles({'marginLeft':'.48em'});
+w_next2amount.boundDesc(['Next']);
+form1.insertBefore(w_next2amount.domNode,suggestBox);
+
+
+function suggest(e){
+	var t = DOMhelp.getTarget(e);
+	if(t.value.length>=3){
+		var matches = collect(t.value,server_data);
+		suggestBox.innerHTML = '';
+		if(matches && matches.length>0){
+			for(var i=0;i<matches.length;i++){
+				var elm = document.createElement("P"); 
+				elm.innerHTML = matches[i];
+				DOMhelp.addEvent(elm,'click',pass,false);
+				suggestBox.appendChild(elm);
+			}
+		}else{
+			suggestBox.innerHTML = '<p>* No Result.</p>';
+		}
+	}else{
+		suggestBox.innerHTML = '<p>must more than 2 chars.</p>';
+	}
+
+	function collect(val,datas){
+		regexp = new RegExp(val,'i');
+//record is id,oldid,item_name(3 fields),we not want match id_field,so do slice
+		var temp =  datas.filter(function(x){
+			return regexp.test(x.split(',')[1]) || regexp.test(x.split(',')[2])
+				});
+		return temp.map(function(x){
+				return (x.split(',')[0]+' '+x.split(',')[2]);
+			});
+	}
+
+	function pass(e){
+		var source = DOMhelp.getTarget(e);
+		//textContent or innerHTML will works,but
+		//innerText is only fit for Chrome,FF not works.
+		t.value = source.textContent.split(' ')[1];   //t is input widget,remember??
+	
+		//give selected id to 'partnumber' field(currently it is hidden)
+		form1.partnumber.value = source.textContent.split(' ')[0];
+
+		//document.location.hash will not works!
+		document.location.href="#top";	
+	}
+}
+
+//first get Div,than add amount-input control-widget.
+amountDiv = document.getElementById("amountDiv");
+
+var w_amount = new Widget('input','amount','text');
+w_amount.setDomNodeStyles({'line-height':'2.0em','fontSize':'1.45em'});
+amountDiv.appendChild(w_amount.domNode);
+
+//add some button to help amount inputting.
+var add1 = new Widget('button','add1','button');
+var add10 = new Widget('button','add10','button');
+var sub1 = new Widget('button','sub1','button');
+add1.setDomNodeStyles({'marginLeft':'0.48em'});
+add1.boundFunc('click',function(e){
+			if(form1.amount.value==="")
+				form1.amount.value='0';
+			form1.amount.value = parseInt(form1.amount.value)+1+'';
+			e.preventDefault();
+			DOMhelp.stopDefault(e);
+			});
+add1.boundDesc('+1');
+
+add10.setDomNodeStyles({'marginLeft':'0.48em'});
+add10.boundFunc('click',function(e){
+			if(form1.amount.value==="")
+				form1.amount.value="0";
+			form1.amount.value = parseInt(form1.amount.value)+10;
+			e.preventDefault();
+			});
+add10.boundDesc('+10');
+
+sub1.setDomNodeStyles({'marginLeft':'0.48em'});
+sub1.boundFunc('click',function(e){
+			if(form1.amount.value==="")
+				form1.amount.value="0";
+			form1.amount.value = parseInt(form1.amount.value) - 1;
+			e.preventDefault();
+			});
+sub1.boundDesc('-1');
+buttonsDiv = document.createElement('div');
+buttonsDiv.className='buttons';
+buttonsDiv.appendChild(add1.domNode);
+buttonsDiv.appendChild(add10.domNode);
+buttonsDiv.appendChild(sub1.domNode);
+//also need 'Reset' button.
+var w_reset2 = new Widget('button','w_reset2','button');
+w_reset2.setDomNodeStyles({'marginLeft':'1.08em'});
+w_reset2.boundFunc('click',function(e){form1.amount.value='';e.preventDefault();});
+w_reset2.boundDesc('Reset Amount');
+
+//compose buttons.
+buttonsDiv.appendChild(w_reset2.domNode);
+amountDiv.appendChild(buttonsDiv);
+
+
+/* store_pos */
+var store_posDiv = document.getElementById("store_posDiv");
+var floor_div = document.getElementById("floor");
+var orient_div = document.getElementById("orient");
+var order_div = document.getElementById("order");
+
+var floor_radio = new Widget("input","floor_radio","radio");
+var orient_radio = new Widget("input","orient_radio","radio");
+var order_radio = new Widget("input","order_radio","radio");
+ 
+floor_radio.boundContent(["floor1","floor2"]);
+orient_radio.boundContent(["west","east","nearwest","neareast"]);
+
+order_radio.boundContent(["1","2","3","4","5","6","7"]);
+
+var w_reset3 = new Widget("button","w_reset3","button");
+w_reset3.boundFunc('click',function(e){
+			reset(form1.floor_radio);	
+			reset(form1.orient_radio);	
+			reset(form1.order_radio);	
+
+			DOMhelp.cancelClick(e);
+
+			function reset(radioes){
+				for(var i=0;i<radioes.length;i++){
+					if(radioes[i].checked==true)
+						radioes[i].checked=false;
+				}
+			}
+		});
+w_reset3.boundDesc('Reset Position');
+
+var pos_ensure = new Widget("BUTTON","pos_ensure","button");
+pos_ensure.boundDesc('Next');
+pos_ensure.boundFunc('click',function(e){
+			if(getChecked(form1.floor_radio)===null || getChecked(form1.orient_radio)===null || getChecked(form1.order_radio)===null){
+				alert('position info:floor,orient,order is required.');
+				DOMhelp.cancelClick(e);
+				return;
+			}
+			form1.store_pos.value = getChecked(form1.floor_radio) + '_' + getChecked(form1.orient_radio) + '_' + getChecked(form1.order_radio);
+			//let commid div show currently inputs.
+			form1.commit_df.click();
+			document.location.href = '#bottom';
+			DOMhelp.cancelClick(e);
+
+			function getChecked(inputs){
+				for(var i=0;i<inputs.length;i++){
+					if(inputs[i].checked==true)
+						return inputs[i].value;
+				}
+				return null;
+			}//End of getChecked().
+			}//End Of noname function.
+			);
+
+
+floor_div.appendChild(floor_radio.domNode);
+orient_div.appendChild(orient_radio.domNode);
+order_div.appendChild(order_radio.domNode);
+store_posDiv.appendChild(w_reset3.domNode);
+store_posDiv.appendChild(pos_ensure.domNode);
+
+//continue to #bottom means "commit"
+//first,get Div.
+var commitDiv = document.getElementById("commitDiv");
+
+//add commit-control-widget.
+//report div
+var report = document.createElement('DIV');
+report.className="report"; 
+
+//collect all fields and show it.
+function review(e){
+	var item_name_data=form1.item_name.value;
+	var partnumber_data = form1.partnumber.value;
+	var amount_data = form1.amount.value;
+	var pos_data = form1.store_pos.value;
+
+	if(item_name_data && amount_data && pos_data){
+		var user_desc = (('user:' + user).bold().fontcolor('black'));
+		var time_desc = (('record time:' + (new Date()).toLocaleString()).bold().fontcolor('black'));
+		var item_name_data_desc = (('item name:' + item_name_data).bold().fontcolor('black'));
+		var amount_data_desc = ('amount:' + amount_data).bold().fontcolor('black');
+		var pos_desc =  ('Postion:' + pos_data).bold().fontcolor('black');
+		var partnumber_desc = ('Partnumber:' + partnumber_data).bold().fontcolor('black');
+
+		report.innerHTML = '<p>' + [time_desc,user_desc,partnumber_desc,pos_desc,item_name_data_desc,amount_data_desc].join('</p><p>') + '</p>'; 
+	}else{
+		report.innerHTML = '<p>empty currently</p>';
+	}
+	//e.preventDefault();
+	DOMhelp.cancelClick(e);
+}//end of review().
+
+//commitDiv contains 4 buttons:check,cancel,ensure and 1 display_no button.
+w_defaultCheck = new Widget('button','commit_df','button');
+w_defaultCheck.setDomNodeAttrs({'class':'hide'});
+w_defaultCheck.boundFunc('click',review);
+form1.appendChild(w_defaultCheck.domNode);
+
+//CANCEL(reset) BUTTON SETUP.
+w_reset4 = new Widget('button','w_reset4','button');
+w_reset4.boundFunc('click',function(e){
+				form1.w_reset1.click();
+				form1.w_reset2.click();
+				form1.w_reset3.click();
+				report.innerHTML = '';
+				document.location.href="#top";
+				DOMhelp.cancelClick(e);
+			});
+w_reset4.boundDesc('Redo');
+
+//ENSURE BUTTON
+w_ensure = new Widget('button','commit_ensure','button');
+w_ensure.boundFunc('click',function(e){
+	//data contains 5 field:login_name,partnumber,store_pos,offline,count
+	var data = {'login_name':user,'partnumber':parseInt(form1.partnumber.value),'store_pos':form1.store_pos.value,'offline':Number(offline),'count':parseInt(form1.amount.value)};
+	if(online){
+		function callback(data){
+			if(data instanceof Object == false)
+				throw new Error('NO EXPECTED TYPE.');
+			report.innerHTML = data.stat?'<h2>Insert A Record Successful!</h2>':'<h2>Failure To Insert A Record.</h2>';
+			if(data.reason)//if reason have value,means something wrong.
+				report.innerHTML += '<h3 class="info">ERROR REASON:' + data.reason + '</h3>';
+		}
+		HTTP.post('/pancunInsert.py',data,callback);
+	}else{ //offline
+		if(confirm("Your Browser Is Offline Now,Do You Want Save This Record In Locale Storage?")){ 
+			if(window.localStorage){//if support localStorage
+				var localdata = JSON.stringify(data)		
+				localStorage['_' + user+ '_' + (new Date()).getTime()]
+					= localdata;
+			}else{
+				alert('Your Browser Is Not Supports Local Storage,Record Can Not Saved.');
+			}
+		}
+	}	
+	DOMhelp.cancelClick(e);
+			});
+w_ensure.boundDesc('Ensure');
+
+w_checkCurrent10 = new Widget('BUTTON','commit_checkCurrently','button'); 
+w_checkCurrent10.boundFunc('click',function(e){
+//connect server(db)
+				function callback(server_data){
+						var table = new CommonTable(server_data.split('\n'));
+						table.init('commitDiv',['pancun_id','partnumber','count','store_pos','offline','record_time','login_name']);
+						table.fullShow();	
+				}
+				HTTP.post('/pancunSelect.py',{'query':'TOP10','user':user},callback);
+				DOMhelp.cancelClick(e);
+			});
+w_checkCurrent10.boundDesc('currently 10 records');
+
+form1.appendChild(commitDiv);
+commitDiv.appendChild(report);
+commitDiv.appendChild(w_reset4.domNode);
+commitDiv.appendChild(w_checkCurrent10.domNode);
+commitDiv.appendChild(w_ensure.domNode);
+
+//let DOMhelp check user's stat.
+window.onload=DOMhelp.checklogin;
+</script>
+</body></html>

@@ -1,0 +1,5 @@
+samsun GT-S5830i  480*320 android 2.3.6
+motorola xoom mz606 1280*800 android 3.0(4.0) ;10.1 inch
+motorola A1680(Ming) 800*480 android 1.6 ;3.1 inch
+
+yusun t29 android 2.3.3 

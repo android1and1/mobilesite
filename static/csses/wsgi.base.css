@@ -1,0 +1,19 @@
+body{
+	width:100%;
+	text-align:center;
+	padding:0px;
+	margin:0px;
+	background-color:#fff;
+}
+table,td{
+	padding:.7em;
+}
+td a{
+	text-decoration:none;
+}
+span{
+	padding:.7em;
+}
+div{
+	border-bottom:1px solid black;
+}

@@ -1,0 +1,11 @@
+HTTP_HEADER=r'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="initial-scale=1.0,width=device-width,maximum=1.0,scale=" />
+<meta charset="utf-8" />
+<title>Cgi Response Page</title>
+<link rel="stylesheet" href="/static/csses/base.css" media="screen" />
+</head>
+<body>
+<!-- A attach of cgi-application,version 1.0  Tue Nov 12 10:45:21 2013 -->
+'''

@@ -1,0 +1,3 @@
+# notes of improve 'DOMhelp.js',or corrections.
+1, getElements()
+	$() is better than this ,if not conside use jquery. 

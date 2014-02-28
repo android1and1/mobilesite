@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><title>Post of AJAX</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<meta charset="utf-8" /> 
+<!-- include css -->
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+
+<!-- include HTTP.js,so this document can use a global var:DOMhelp -->
+<script src="/static/jses/HTTP.js"></script>
+
+<!-- include DOMhelp.js -->
+<script src="/static/jses/DOMhelp.js"></script>
+
+<meta charset="utf-8">
+<style>
+.palceholder{
+	border:1px solid #f1f1a2;
+	text-align:center;
+	font-size:2em;
+	padding:.7em;
+	width:80%;
+	background-color:#f1f1a2;
+}
+.palceholder p{
+	border-left:2px solid #ff0a0a;
+} 
+</style>
+</head>
+
+<body>
+<!-- placeholder -->
+<span id="ajax" class="placeholder">html ready.</span>
+
+<article>
+<header>
+<hgroup>
+<h2>Usage</h2>
+<h2>fill the 'item_name' field,and click 'submit' button</h2>
+</hgroup>
+</header>
+<section>
+<!-- create a form ,method is POST -->
+<form name="f1" > 
+	<h1>it is ajax-post lesson</h1>
+	<label for="item_name">Input Item Name: <input type="text" size="28" name="item_name" /></lalel><br />
+	<input type="submit" />
+</form>
+<article id="response">
+
+</article>
+<footer>
+thanks for submit.
+</footer>
+</article>
+<script>
+	var f1 = document.f1;
+	f1.onsubmit = master; 
+	req = HTTP.newRequest();
+	function master(){
+//		alert('cancel submit button default.do ajax action.');
+		req.onreadystatechange = function(){
+			if(req.readyState==4){
+				if(req.status==200){
+					alert('heard fro server:\n' + req.responseText);
+				}else{
+					alert('status==' + req.status + '\n' +
+						'statusText==' + req.statusText);
+				}
+			}
+		};//callback function finish.
+
+		// send What?
+		//var parameters = 'item_name=old';
+		req.open("POST","/pajax.py");
+//setRequestHeader() be invoked 3 times.
+		req.setRequestHeader('If-Modified-Since','Wed,05 Apr 2006 00:00:0 GMT');
+		req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+		req.setRequestHeader('Content-Length',parameters.length);
+//		req.setRequestHeader('Connection','close');
+
+		//at last,send it.
+		req.send(encodeURI("item_name=old"));
+//		alert('req sending');
+	}//function define finish.
+</script>
+</body></html>

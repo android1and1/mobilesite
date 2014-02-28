@@ -1,0 +1,92 @@
+/*
+* Widget is a wrapper of HTML-FORM-CONTROL-ELEMENT 
+* it can wrapp <input> <select> <button> <textarea>
+*
+*/
+function Widget(tagName,fieldName,widget_type){
+	this.tagName = tagName.toLowerCase();
+	this.fieldName = fieldName.toLowerCase();
+	if(widget_type)
+		this.widget_type=widget_type.toLowerCase();
+	else this.widget_type='';
+	if(this.widget_type==='checkbox' || this.widget_type==='radio')
+		this.domNode = document.createElement('div');
+	else{
+		this.domNode = document.createElement(tagName);
+		this.domNode.name = this.fieldName;	
+		this.domNode.type=widget_type;
+	}
+};
+Widget.prototype = {
+	boundFunc:function(eventType,func){
+		DOMhelp.addEvent(this.domNode,eventType,func,false);
+	},
+	boundDesc:function(descText,descTagName){
+		if(descTagName){
+			var descElm = document.createElement(descTagName);
+			descElm.appendChild(document.createTextNode(descText));
+			descElm.appendChild(this.domNode);
+			this.domNode = descElm;
+		}else{//it is button widget.
+			if(this.tagName!=='button')return;
+			this.domNode.appendChild(document.createTextNode(descText));
+		}
+		
+	},
+	//options is an Array.
+	//case input type=text or button ,options=value(single)
+	//case radio,checkbox,select options=options
+	boundOptions:function(options,defaultIndex){
+		if(defaultIndex==null)
+			defaultIndex=0;	
+		switch(this.tagName){
+			case 'select':
+				for(var i=0;i<options.length;i++){ 
+					if(defaultIndex===i)
+						this.domNode.options.add(new Option(options[i],options[i],true,true));
+					else
+						this.domNode.options.add(new Option(options[i],options[i]));
+					
+				}
+				break;
+				
+			case 'input':
+				switch(this.widget_type){
+					case 'checkbox':
+					case 'radio':
+						for(var i=0;i<options.length;i++){ 
+							var element = document.createElement('input');
+							element.name=this.fieldName;
+							element.value=options[i];
+							element.type=this.widget_type;
+							if(i===defaultIndex)
+								element.checked="checked";
+							this.domNode.appendChild(element);
+							this.domNode.appendChild(document.createTextNode(options[i]));
+						}
+						break;
+					case 'button':
+					case 'text':
+						this.domNode.value=options;
+						break;
+					
+					default:
+						break;
+				}//inner switch block (end)
+				break;
+			case 'button':
+				this.domNode.value=options;
+				break;
+			case 'textarea':
+				this.domNode.value = options;
+				break;
+			default:
+				break;
+		}//switch block end.	
+	},
+	setDomNodeAttrs : function(attrs){
+		for(var i in attrs){
+			this.domNode.setAttribute(i,attrs[i]);	
+		}	
+	}	
+};

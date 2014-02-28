@@ -1,0 +1,40 @@
+<html>
+<head>
+<title>
+break page.
+</title>
+<h1>break page.</h1>
+<script>
+data = (function(){
+	var temp=[];
+	for(var i=0;i<1009;i++){
+		temp.push('line' + i  );
+	}
+	return temp;
+	})();
+//now we got data.
+//alert(data.join(','));
+//we want 100 lines as a page.what to do?
+function pagebreak(data,rule){
+	var pages = [];
+	var tempstr=''; 	
+	for(var i=0;i<data.length;i++){
+		if(i%rule==0 && i!=0){
+			pages[i/rule] = tempstr;	
+			tempstr='';
+		}
+		tempstr += data[i];	
+	}
+	if(tempstr.length>80){
+		pages.push(tempstr);
+	}else{
+		pages[pages.length-1] +=  tempstr;
+	}
+	return pages;
+}
+alert(pagebreak(data,100).length);  
+</script>
+<body>
+
+</body>
+</html>

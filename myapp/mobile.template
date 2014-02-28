@@ -1,0 +1,15 @@
+# client-side:<module>CommonHandler.py
+# mobile layout with html5 protocol.
+# last edited date:2014/2/11
+# the template will include BODY-CONTENT (CommonHandler.App instance created)
+
+mobile_template=r'''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="initial-scale=1.0,width=device-width" />
+<meta charset="utf-8" />
+<title>Cgi Response Page</title>
+<link rel="stylesheet" href="/static/csses/base.css" media="screen" />
+</head>
+<body>%s</body></html>
+'''

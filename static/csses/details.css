@@ -1,0 +1,22 @@
+<style>
+	.photodiv{
+		width:100%;
+		text-align:center;
+	}
+	.photodiv img{
+		width:95%;
+		padding:.7em;
+		border:1px solid #f1f1f1;
+		margin-bottom:.7em;
+		float:left;
+	}
+	.photodiv p{
+		display:block;
+		float:left;
+		margin:auto;
+		width:90%;
+		background-color:lime;
+		color:maroon;
+		font-style:oblique;
+	}
+</style>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><title>Title:JSONP PAGE</title>
+<script src="/static/jses/DOMhelp.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+var echoInPlaceholder = function(remote_data){
+	var body = document.getElementsByTagName("body")[0];
+	body.appendChild(DOMhelp.createTextElm("H2",remote_data));
+}
+</script>
+
+<script type="text/javascript" src="http://localhost/resjs.py?jsonp=echoInPlaceholder"></script>
+
+<p>end tag</p>
+</body></html>
