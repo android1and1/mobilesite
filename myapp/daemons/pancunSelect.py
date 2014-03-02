@@ -1,4 +1,4 @@
-#! C:\Python27\python.exe
+#!/usr/bin/env python
 #coding=utf-8
 
 # client-side /static/pancun.html 

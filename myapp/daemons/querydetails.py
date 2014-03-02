@@ -1,4 +1,4 @@
-#!E:\Python27\python.exe
+#!/usr/bin/env python
 # coding:gbk
 
 #// filename 'querydetails.py'

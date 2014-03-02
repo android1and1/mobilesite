@@ -1,4 +1,4 @@
-#! E:\Python27\python.exe
+#!/usr/bin/env python
 # this script check login stat.
 
 import sqlite3

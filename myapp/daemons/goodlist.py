@@ -1,4 +1,4 @@
-#! C:\Python27\python.exe
+#!/usr/bin/env python
 # encoding=gbk
 # original filename 'unicodeformoto.cgi'
 # filename 'goodlist.cgi' 

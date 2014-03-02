@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+# encoding=utf-8
+
+# sendmail(ver2.1)
+# send a file's copy as email body.'from' and 'to' is same(itself).
+# Usage:
+#	./sendmail FILENAME [ACCOUNT:PASSWORD]
+# [ACCOUNT:PASSWORD] means this argument is optional,if not exists 
+# in commandline,will open a intersive input.
+# Sample:
+#	./sendmail afile.txt someone@hostname:secret123
+#
+# something was bounded:
+# 1)Smtp Server : below variable: SERVER_NETLOC 
+# 2)Subject:'Copy ***'
+# 3)Only Send One File.
+# 4)Only Send From One Smtp's Account
+# 5)Only Send To One Smtp's Account(From,To are same account,send to itself).
+# 
+# Alan Dershowitz 2014/1/8
+#
+
+from smtplib import SMTP
+from email.mime.text import MIMEText #alwasy written as 'mail'!
+import sys,os
+
+
+SERVER_NETLOC = 'smtp.126.com'
+
+def _parse(acc_pass):
+	'''argument:acc_pass format: account:password
+		account must full name like deyijia@126.com
+		password is used for smtp server.
+	'''
+	return tuple(acc_pass.split(":")) 
+
+if len(sys.argv) < 2:
+	print r'Usage:[./]sendmail FILENAME [ACCOUT:PASSWORD]'
+	sys.exit(0)
+file=sys.argv[1]
+if len(sys.argv) == 2:
+	account=raw_input("Enter Your Email Account: ")
+	password=raw_input("Enter Password: ")
+	
+else:
+	pair = _parse(sys.argv[2])
+	account=pair[0]  
+	password=pair[1]
+
+if not os.path.exists(file):
+	print r'''%s not exists,check first.''' % file
+	sys.exit(1)
+
+#keep file's content into 'mail_body'!
+mail_body = open(file,'r').read()	
+
+#prepare mail-mime-text
+mail_obj = MIMEText(mail_body,'plain','gb2312')	# can handle gjk chars.
+
+mail_obj['Subject']='Copy File EMail,FileName:%s' % os.path.basename(file)
+mail_obj['From']=account
+mail_obj['To']=account
+
+#together!
+mail_str = mail_obj.as_string()
+
+#start send mail
+try:
+	serv=SMTP()
+	serv.connect(SERVER_NETLOC)
+	serv.login(account,password)
+	serv.sendmail(account,(account,),mail_str)
+	serv.close()
+except Exception,e:
+	print e.args[0]
+	sys.exit(2)
+print 'All Right.Sended An Email.'
+
+

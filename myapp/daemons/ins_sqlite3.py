@@ -1,4 +1,4 @@
-#! C:\Python27\python.exe
+#!/usr/bin/env python
 #coding=utf-8
 
 # script name : ins_sqlite3.py (version 1.3)

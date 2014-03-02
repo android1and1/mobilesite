@@ -1,4 +1,4 @@
-#! C:\Python27\python.exe
+#!/usr/bin/env python
 # client side : '/static/query_partnumber.html' want jsonp.
 import sqlite3
 import cgi
