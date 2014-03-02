@@ -1,0 +1,46 @@
+# DIRROOT/PROJECT:mobilesite
+# version 3.0
+# Written By Alan Deshowitz, Fri Feb 28 13:31:40     2014
+# commited to github.com at 2014/2/28 via 'Maple Touch' (workstation)
+# only two branches:linux and windows
+# linux platform needs some difference from windows.
+# two diff branch keep developing,till finished,then master will merge them. 
+
+#there are a lot of jobs will handle for this project -- mobilesite
+REQUIRES: 
+====== windows platform ==========
+python 2.7+
+apache2.2+(include mod_wsgi.so)
+mysql
+msysgit(include shell .exe file)
+
+========= linux platform ========
+python 2.6+
+apache2.2+
+mysql
+git-core
+
+
+TARGET:
+make a www site for mobile-like client.can upload client data.
+this version can give a platform to do these things(below):
+1)check resposity
+2)check workers coming/leaving time(KAO QING)
+3)group information
+4)group mails
+5)monitor of sale's data/good's data
+6)share base knowleges
+7)check sale lists(customers)
+8)check each worker's effective.
+
+
+STRUCT:
+1)app(see /myapp/../..)
+2)resources
+3)help-scripts
+
+
+
+
+
+

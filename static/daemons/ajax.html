@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><title>AJAX troubleshoot_dyj</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<meta charset="gbk" /> 
+<!-- include css -->
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+
+<!-- include HTTP.js,so this document can use a global var:DOMhelp -->
+<script src="/static/jses/HTTP.js"></script>
+
+<!-- include DOMhelp.js -->
+<script src="/static/jses/DOMhelp.js"></script>
+
+<meta charset="utf-8">
+<style>
+.palceholder{
+	border:1px solid #f1f1a2;
+	text-align:center;
+	font-size:2em;
+	padding:.7em;
+	width:80%;
+	background-color:#f1f1a2;
+}
+.palceholder p{
+	border-left:2px solid #ff0a0a;
+} 
+</style>
+</head>
+
+<body>
+<!-- placeholder -->
+<span id="ajax" class="placeholder">html ready.</span>
+
+<!-- DOMhelp function -->
+<script>
+function master(){
+	req = HTTP.newRequest();
+	req.onreadystatechange = function(){
+		if(req.readyState==4){ //If the request is finished.
+			if(req.status==200){//If successful.
+			ajax = document.getElementById("ajax");
+//			ajax.innerHTML = '<p>' + (req.responseText) + '</p>';
+			var obj;
+
+			if(window.JSON && window.JSON.parse){
+				obj = JSON.parse(req.responseText);
+				ajax.innerHTML+='<p>parse by JSON.parse</p>';
+			}else{
+				obj = eval('(' + req.responseText + ')');
+				ajax.innerHTML+='<p>parse by eval()</p>';
+			}
+			for(i in obj){
+				ajax.innerHTML += '<p>';
+				for (ii in obj[i]){
+					if(ii==1){
+						ajax.innerHTML += obj[i][ii];
+					}else{
+						ajax.innerHTML += (obj[i][ii] + ' == ');
+					}
+				}
+			}
+
+		}//if-loop
+		}//if-loop
+	};
+
+	req.open("GET","/doajax.py?name=what",true);
+	req.send(null);   
+}
+</script>
+<article>
+written by Alan Dershowitz 2013 11 15 17:42:00
+</article>
+<button name="submit" onclick="master();" >subimt</button>
+</body></html>

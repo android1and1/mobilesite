@@ -1,0 +1,3 @@
+function ifonline(){
+	return false;
+}

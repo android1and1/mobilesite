@@ -1,0 +1,31 @@
+form.CommonForm{
+	position:relative;
+	top:0px;
+	left:0px;
+}
+.suggestBox{
+	position:relative;
+	width:88.5%;
+	text-align:left;
+	padding:.9em;
+}
+div.buttons{
+	text-align:center;
+	dispaly:in-line;
+	margin-top:.7em;
+	margin-bottom:2em;
+	padding:.7em;
+}
+div.report{
+	color:#0f4;
+	padding:2.1em;
+	text-align:left;
+	width:90%;
+}
+span.formblock{
+	display:in-line;
+	padding:0px;
+	margin-left:2em;
+	margin-right:2em;
+	padding:0px;
+}

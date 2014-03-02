@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset='utf-8' manifest="/static/sam.appcache" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<link  rel="stylesheet" href="/static/csses/base.css" media="screen" type="text/css" />
+<script src="/static/jses/Deyijia.1.7.js"></script>
+
+</head>
+
+<body>
+<header>
+<hgroup>
+	<h1>得宜家网页服务列表</h1>
+	<h2>请先登录</h2>
+</hgroup>
+</header>
+<section>
+<h2><a href="/static/login.html">登录</a></h2>
+<h2><a href="/myapp/imp3.py">check login history</a></h2>
+<h2><a href="/static/input_and_getScript.utf8.html">商品盘存页</a></h2>
+<h2><a href="/static/pancun.html">(test)商品盘存页</a></h2>
+<h2><a href="/cgi-bin/parseFile.cgi">上传商品图片页</a></h2>
+<h2><a href="/goodlist.cgi">商品描述页</a></h2>
+<h2><a href="/static/sam1.html">图书注册</a></h2>
+<h2><a href="/static/windows/sam2.html">缓存数据查看/上传</a></h2>
+<h2><a href="/static/fetch1good.html">Fetch One Good</a></h2>
+<h2><a href="/myapp/imp2.py">All Input Of Mine</a></h2> 
+</section>
+<footer>
+<p>2013 all rights received @deyijia</p>
+</footer>
+<script>
+	alla = document.links;
+	for(var i=0;i<alla.length;i++){
+		DOMhelp.addEvent(alla[i],'click',login,false);
+	}
+	function login(e){
+		isValid=parseInt(DOMhelp.getACookieValue('isValid'));	
+		if(!isValid){
+			document.location.href='/static/login.html';
+			e.preventDefault()
+		}
+		else{
+			return true;
+		}
+	}
+</script>
+</body></html>

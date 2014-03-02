@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0" />
+<meta charset="utf-8" />
+<title>PageNavigator</title>
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<script src="/static/jses/goodbase.js"></script>
+<style>
+button{
+	background-color:white;
+}
+
+</style>
+
+</head>
+<body>
+<!--
+I Found My Cadillac right-front wheel has a stick,I have collected it.
+after today ,will watch carefully at this wheel's status.(2013-12-5 11:33:00)
+currently status: 240pa.ater some while(2.4KM),will raise to 244pa
+contains wheel's staus is 236pa,also will raise to 240pa after running some while.
+(ater a day)
+today my child want '14 mouses' paint,i ordered it,but when near finish , service is crash.memo:1,14 spend winter;2,14 dig s-potato
+2013 12 6
+2013/12/7 wheel is ok till today.the wheel we cared is 240-244pa(before),other is 236pa-240pa
+-->
+<table id="theTable" border="1">
+<thead>
+<tr><th>id</th><th>oldid</th><th>item_name</th></tr>
+</thead>
+<tbody id="theBody">
+</tbody>
+</table>
+<button id="previous">Previous</button>
+<button id="next">Next</button>
+<script>
+function show(tbody,start){
+	tbody.innerHTML = '';
+	for(var i=start;i<start+LIMIT;i++){
+		if(i>=TOTAL)break;
+		var line = lines[i].split(',');//3 fields.
+		tbody.innerHTML += '<tr><td>' + [line[0],line[1],line[2]].join('</td><td>') + '</td></tr>';
+	}	
+}
+function init(){
+//define some constant.
+lines = goodbase.split('\n');
+theTable = document.getElementById('theTable');
+theBody = document.getElementById("theBody"); 
+if(!theTable || !theBody)return;
+CURRENT = 0;
+LIMIT = 25;//only show LIMIT lines each page.
+TOTAL = 91;
+//make link 'next'
+countP = document.getElementById("count");
+nextButton = document.getElementById('next');
+previousButton = document.getElementById('previous');
+	function slide(e){
+		var theButton = DOMhelp.getTarget(e);
+		var anotherButton;	
+		if(theButton.textContent==='Next'){//it is next orient.
+			//get another button:previous.
+			anotherButton = theButton.previousElementSibling;
+			if(CURRENT>=TOTAL-LIMIT){
+				theButton.style.backgroundColor='grey';
+			}else{
+				show(theBody,CURRENT+LIMIT);				
+				CURRENT+=LIMIT;
+			}
+			if(CURRENT>LIMIT)
+				anotherButton.style.backgroundColor='white';
+		}
+		else if(theButton.textContent==='Previous'){
+			//get closestSibling(next button)
+			anotherButton = theButton.nextElementSibling;
+			if(CURRENT>=LIMIT){
+				if(CURRENT==LIMIT)
+					theButton.style.backgroundColor='grey';
+				show(theBody,CURRENT-LIMIT);
+				CURRENT-=LIMIT;
+			}else{
+				theButton.style.backgroundColor='grey';
+			}
+			if(CURRENT<TOTAL-LIMIT)
+				anotherButton.style.backgroundColor='white';
+		}
+		else{
+			alert('invalid argument.');
+		}
+	}//end of slide().
+	DOMhelp.addEvent(previousButton,'click',slide,false);	
+	DOMhelp.addEvent(nextButton,'click',slide,false);	
+	show(theBody,0);
+}//end of init().
+window.onload=init();
+</script>	
+</body></html>

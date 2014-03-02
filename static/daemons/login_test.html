@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<meta charset="utf-8" />
+<title>Login Page Version2.28</title>
+<!-- include css -->
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<script src="/static/jses/user.js"></script>
+<script src="/static/jses/online.js"></script>
+<style>
+	input{
+		padding:.7em;
+		line-height:1.65em;
+		font-size:1.31em;
+	}
+</style>
+</head>
+<body>
+<header>
+<h2>用户登录</h2>
+</header><body>
+<form name="loginf" action="/ano.py" method="POST">
+<input type="text" class="hide" name="client_time" />
+<p>用户: &nbsp;&nbsp;<input type="text" name="login_name" /><p>
+<p>口令: &nbsp;&nbsp;<input type="password" name="password" /></p>
+<p><input type="reset" value="清除"/> &nbsp;&nbsp;&nbsp;<input value="提交" type="submit" /></p>
+</form>
+<script>
+	DOMhelp.addEvent(document.loginf,'submit',function(e){
+				document.loginf.client_time.value = Math.round(Date.parse(new Date())/1000) + '';
+				return true;
+				},false);
+</script>
+</body></html>
+
+
+
+

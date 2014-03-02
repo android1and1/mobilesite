@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0,width=device-width" />
+<title> JSONP </title>
+<style type="text/css">
+#sel{
+	width:250px;
+	height:250px;
+	border:2px solid purple;
+	padding:2.1em;
+	font-size:44px;
+}
+</style>
+
+<!-- below is JSONP's callback function -->
+<script>
+HTTP={};
+HTTP.getTextWithScript=function(query,callback,serverUrl){
+	//Create a new script as element and add it to the document.
+	var script = document.createElement('script');
+	document.body.appendChild(script);
+	
+	//Get a unique function name.
+	var funcname = "func" + HTTP.getTextWithScript.counter++;
+
+	//Define a function with that name,using this function as a 
+	//convenient namespace.The script generated on the server
+	//invokes this function.
+	HTTP.getTextWithScript[funcname]=function(text){
+	//Pass the text to the callback function
+	callback(text);
+
+	//clean up the script tag and the generated function.
+	document.body.removeChild(script);
+	delete HTTP.getTextWithScript[funcname];
+	}
+	//Encode the URL we want to fetch and the name of the function
+	//as arguments to the jsquoter.php server-side script.Set the src
+	//property of the script tag to fetch the URL.
+	script.src = serverUrl + "?query=" + encodeURIComponent(query) + "&func=" + encodeURIComponent("HTTP.getTextWithScript."+funcname);
+}
+// we use this to generate unique function callback names in case there
+// is more than one request pending at a time.
+HTTP.getTextWithScript.counter = 0;
+	function getok1(responseText){
+		var sel = document.getElementById("sel");
+		sel.innerHTML=responseText;
+	}
+	function getok2(responseText){
+		var sel = document.getElementById("sel");
+		sel.innerHTML=responseText.toUpperCase();
+	}
+</script>
+</head>
+<body>
+<h1>Container </h1>
+<div id="sel">
+<button id="but1">button1<button>
+<br />
+<br />
+<button id="but2">button2<button>
+
+</div>
+<script>
+//client-side needs:
+//1,cancel default submit action,instead of JSONP method.
+//2,addEventListener to input#submit,when click,will invokes jsonp().
+
+// server-side needs:
+// 1,variable is 'SERVER_HOSTNAME?query=VARIABLE' ,split QUERY_STRING with 'query'.
+// 2,wrapper every record with <option value="VALUE">VALUE</option>
+	but1=document.getElementById("but1");
+	but1.onclick=function(){HTTP.getTextWithScript('peekaboo',getok1,'/giveok.cgi');};
+	but2=document.getElementById("but2");
+	but2.onclick = function(){
+		document.body.appendChild(document.createElement("script"));
+		document.body.lastChild.setAttribute('src','/giveok.cgi?query=peekaboo&func=getok2');
+	}
+</script>
+</body></html>

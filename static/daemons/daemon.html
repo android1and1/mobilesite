@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<meta charset="utf-8" />
+<title>template of html page(for troubleshoot dyj)</title>
+<!-- include css -->
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+
+<!-- include DOMhel.js,so this document can use a global var:DOMhelp -->
+<script src="/static/jses/DOMhelp.js"></script>
+<script src = "/static/viewport.js"></script>
+<style>
+.block{
+	display:block;
+	width:200px;
+	height:100px;
+	border-bottom:2px solid #000;
+	margin:auto;
+}
+#b3.block{
+	position:relative;
+	left:200px;
+	top:289px;
+}
+
+.wrapper{
+	width:550px;
+	height:500px;
+	position:absolute;
+	left:150px;
+	right:150px;
+}
+</style>
+</head>
+
+<body>
+<form name="f1">
+<div><span>something</span>
+	<span><a href="#utb">goto utb.</a></span>
+<p>Boney M<input type="text" value="Boney M"/><a href="#read1">read1 </a></p>
+<p id="p1">re.<button value="2">button here.</button></p>
+<div class="wrapper">Bahama mama<p><label>it<input type="text" value="Bahamamama" /></label></p></div>
+<div class="wrapper"><div class="block">wrapper<span>wrapper<input value="Submit" type="submit" /></span></div>wrapper</div>
+</form>
+	<span class="block"></span>
+<!-- DOMhelp function -->
+<script>
+var button = document.getElementById("but1");
+var span = document.getElementById("b3");
+
+function showWH(e){
+	var msg = CommonForm.getWH(e);
+	alert('width==' + msg.width  + ',height==' + msg.height);
+}
+function showCoordinate(e){
+	var msg = CommonForm.getCoordinate(e);
+	alert('Coordinate is (' + msg.left + ',' + msg.top + ')');
+}
+
+
+/* test search methods */
+//alert(CommonForm.search_tag(document.body,'INPUT').value);
+alert(CommonForm.search_tag(document.body,'a').href);
+
+</script>
+</body></html>

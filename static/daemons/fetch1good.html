@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<meta charset="utf-8" />
+<title>Fetch A Good Infomation</title>
+<!-- include css -->
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/static/csses/Commonform.css" media="screen" />
+
+<!-- include DOMhel.js,so this document can use a global var:DOMhelp -->
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<style>
+
+</style>
+</head>
+
+<body>
+<form name="fetch1good_form" action="/fetch1good.py" method="POST">
+	<p>Key Word: <input type = "text" name="condition" /></p>
+	<p><input type="reset" />&nbsp;&nbsp;<input type="submit" /></p>
+</form>
+<div id="matches"></div>
+
+<!-- DOMhelp function -->
+<script>
+function onsubmit(e){
+	divE = document.getElementById("matches");
+
+	function callback(server_data){
+//server_data type is Array.(return json_data)
+		if(typeof server_data	!= 'object'){
+			alert('need object,not str or number');
+			return;
+		}
+		if(server_data===null){
+			alert('Can Not Retrieve Server Data,It Is Maybe Null');
+			return;	
+		}
+		divE.innerHTML = '<p>';
+		divE.innerHTML += server_data.join(',');
+		divE.innerHTML += '</p>';
+	}
+	HTTP.post("/fetch1good.py",{"condition":document.fetch1good_form.condition.value},callback);
+	DOMhelp.cancelClick(e);
+}
+DOMhelp.addEvent(document.fetch1good_form,'submit',onsubmit,false);
+</script>
+</body></html>

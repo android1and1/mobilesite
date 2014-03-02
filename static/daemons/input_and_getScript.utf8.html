@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" manifest="/static/sam.appcache">
+<head><title>New:盘点商品WEB页</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<style>
+.block{
+	margin-top:4em;
+	position:relative;
+	height:214px;	
+	background-color:#ffffff;
+}
+#suggest{
+	width:85%;
+	padding:1.1em;
+	text-align:left;
+}
+#suggest span{
+	padding:.9em;
+	display:block;
+	text-indent:1.225em;
+	font-size:135%;
+	color:#f11a88;
+}
+#suggest span a{
+	text-decoration:none;
+}
+.f1 input{
+	height:2em;	
+}
+.f2 input{
+	height:2em;	
+}
+#input_item_name,#input_amount{
+	width:71.3%;
+	font-size:128%;
+}
+.noinput{
+	display:none;
+}
+</style>
+</head>
+<body>
+<!--- form 1 ..................................... -->
+<a name="f1"></a>
+<header>
+<h3>数据一：商品名称</h3>
+</header>
+<form class="f1" name="f1">
+<label for="input_item_name">请输入商品名关键字或商品ID号： <input type="text" name="input_item_name" id="input_item_name" /></label>
+<p><input type="button" value="确定" id="item_name_ensure" />&nbsp;&nbsp;<input type="reset" value="清除"/> </p>
+<input type="text" class="noinput"/>
+</form>
+<div id="suggest"> 
+</div>
+
+<!-- form 2 ..................................... -->
+
+<a name="f2"></a>
+<header>
+<h3>数据二：数量</h3>
+</header>
+<form class="f2" name="f2">
+<label for="input_amount">请输入数量： <input type="text"  name="input_amount" id="input_amount" /></label>
+<p>
+	<button value="-1" id="sub1">-1</button>&nbsp;&nbsp;&nbsp;
+	<button value="1" id="add1">+1</button>&nbsp;&nbsp;&nbsp;
+	<button value="10" id="add10">+10</button>&nbsp;&nbsp;&nbsp;
+<input type="button" value="确定" id="amount_ensure"  />&nbsp;&nbsp;
+<input type="reset" value="清除"/>
+</p>
+<input type="text" class="noinput"/>
+</form>
+
+<!-- form 3 ............................................ -->
+<a name="f3"></a>
+<header>
+	<h2>提交</h2>
+</header>
+<form name="f3">
+</form>
+<footer>d.y.j 2013@copyright
+</footer>
+
+
+
+<!-- js code from here.................................... -->
+<script>
+elts = DOMhelp.getElements("input_item_name","input_amount","suggest","item_name_ensure","amount_ensure","add1","sub1","add10");
+
+var suggest=elts['suggest'];
+var input_item_name = elts['input_item_name'] //it is input widget.
+var input_amount = elts['input_amount'] //it is input widget.
+var item_name_ensure=elts['item_name_ensure'];//will raise form.
+var amount_ensure=elts['amount_ensure'];//will raise form.
+var add1=elts['add1'];
+var add10=elts['add10'];
+var sub1 = elts['sub1'];
+
+
+//add event listener
+DOMhelp.addEvent(input_item_name,'change',onchange_check,false);
+DOMhelp.addEvent(item_name_ensure,'click',onensure,false);
+DOMhelp.addEvent(amount_ensure,'click',onensure,false);
+DOMhelp.addEvent(add1,'click',adjust,false);
+DOMhelp.addEvent(add10,'click',adjust,false);
+DOMhelp.addEvent(sub1,'click',adjust,false);
+
+
+
+//data is global variable!!!!
+
+var data=['数据库错误或网络连接错误'];
+
+function onPageLoad(){
+//	HTTP.post('http://localhost/give_data.py',{'query':'give me a data.','func':'icanshowit'},callback,handlerError);
+//	HTTP.getTextWithScript('select item_name from pancun',callback,'/give_data.py');
+	//HTTP.getTextWithScript('select item_name from pancun',callback,'/give_data.py');
+	HTTP.getTextWithScript('select id,old_id,item_name from pregood',callback,'/give_data.py');
+
+}
+function callback(server_data){
+	data=eval('(' + server_data + ')');
+};
+
+
+function onchange_check(e){
+	var t = DOMhelp.getTarget(e);
+	//alert(t.nodeName + t.value);
+	if(t.value.length >= 3){
+		show(check(t.value,data));
+	}else{
+		var notice = DOMhelp.make('H3','*需要大于两个字符.');
+		document.f1.insertBefore(notice,document.f1.lastElementChild);
+		DOMhelp.shake(t);
+		function delself(e){
+			e.parentNode.removeChild(e);
+		}
+		DOMhelp.fadeOut(notice,delself,2000);
+	}
+}
+
+//valid method
+function showwarnning(msg,parentElm){
+	var newElm = DOMhelp.createTextElm('SPAN','*' + msg);	
+	newElm.className = 'warinning';
+	parentElm.parentNode.insertBefore(newElm,parentElm);
+	function oncomplete(itself){
+		itself.parentNode.removeChild(itself);
+	}
+	DOMhelp.fadeOut(newElm,oncomplete,2500);
+}
+function valid_name(data,parentElm){
+	if(!data){
+		showwarnning('empty value.');
+		return;
+	}
+	name_format = /^[\u4e0-\u9fa5]+[_-]?$/;
+	if(name_format.test(data) == false)
+		showwarnning('contains invalid char(s).',parentElm);	
+	
+}
+function valid_amount(data,parentElm){
+	if(!data){
+		showwarnning('empty value.');
+		return;
+	}
+	digit_format = /^\d+$/; 
+	if(digit_format.test(data)==false)
+		showwarnning('contains invalid char(s).',parentElm);
+}
+
+//NOTICE:check() :do link wrap data going here:
+function check(input,source_data){
+	var check_result=[];
+	for(var i in source_data){
+		if(source_data[i].toLowerCase().indexOf(input.toLowerCase())!=-1){
+//NOTICE:do link wrap data going here:
+			//var tip = source_data[i].split(':')[2].link('/localehost/query_via_item_name?table=pregood&id=' + source_data[i].split(':')[0]);		
+			var tip = source_data[i].split(":")[2];
+			check_result.push(tip);
+		}// endif.
+	}//end for.
+	return check_result;
+}
+
+function show(check_result){
+	//first,need clear all childs. always forgot!!
+	if(suggest.childNodes){
+		for(var i=suggest.childNodes.length-1;i>=0;i--){
+			suggest.removeChild(suggest.childNodes[i]);
+		}
+	}
+	if(check_result && check_result.length!=0){
+		for(var i in check_result){
+			var element = DOMhelp.make('span',check_result[i]); 
+			suggest.appendChild(element);
+			DOMhelp.addEvent(element,'click',tipReplace,false);	
+		}
+	}
+}
+function tipReplace(e){
+	//alert('heard from tipReplace()');
+	var source = DOMhelp.getTarget(e);
+	input_item_name.value = source.textContent;	
+	//return to form1:input_item_name
+	input_item_name.blur();
+	document.location.href='#f1';
+}
+
+//on ensure button is clicked
+function onensure(e){
+	var t = DOMhelp.getTarget(e);
+	switch(t.id){
+		case "item_name_ensure":
+			//document.location.hash = '#f2'; 
+			document.location.href = '#f2'; 
+			break;
+		case "amount_ensure":
+			review();	
+			//document.location.hash = '#f3';
+			document.location.hash = '#f3';
+			break;
+		default:
+			break;
+	}
+	function review(){
+		var record = DOMhelp.make('P',{'id':'counter' + (++commit_counter)},'提交数据 ' + commit_counter + ': ' + input_item_name.value + ' , ' + input_amount.value);
+		var commit_button = DOMhelp.make('button',{'id':'combut'+commit_counter,'onclick':'commit()'},'提交');
+		var cancel_button = DOMhelp.make('button',{'id':'canbut'+commit_counter,'onclick':'cancel()'},'取消');
+		var gototop_button = DOMhelp.make('button',{'id':'gototop' + commit_counter,'onclick':'gototop()'},'GO TOP');
+		document.f3.appendChild(record);
+		document.f3.appendChild(DOMhelp.createTextElm('P','--- --- ---'));
+		document.f3.appendChild(commit_button);
+		document.f3.appendChild(cancel_button);
+		document.f3.appendChild(gototop_button);
+	}
+}
+function commit(){
+	var combut = document.getElementById('combut' + commit_counter);
+	combut.parentNode.removeChild(combut);
+	var canbut = document.getElementById('canbut' + commit_counter);
+	canbut.parentNode.removeChild(canbut);
+	var gototop = document.getElementById('gototop' + commit_counter);
+	gototop.parentNode.removeChild(gototop);
+	alert('提交完成');
+}
+function cancel(){
+	var record = document.getElementById('counter' + commit_counter);
+	record.parentNode.removeChild(record);
+	document.f1.reset();
+	show(null);//for clear tips if exists.
+	document.f2.reset();
+	document.location.href='#f1';
+	var combut = document.getElementById('combut' + commit_counter);
+	combut.parentNode.removeChild(combut);
+	var canbut = document.getElementById('canbut' + commit_counter);
+	canbut.parentNode.removeChild(canbut);
+	var gototop = document.getElementById('gototop' + commit_counter);
+	gototop.parentNode.removeChild(gototop);
+}
+
+function adjust(e){
+	var t=DOMhelp.getTarget(e);
+	input_amount.value = (Number(input_amount.value)) + Number(t.value); 	
+	DOMhelp.stopDefault(e);	
+}
+function gototop(){
+	document.location.hash='f1';
+}
+input_item_name.focus();
+commit_counter = 0;
+window.onload = onPageLoad;
+</script>
+
+</body>
+</html>

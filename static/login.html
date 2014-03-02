@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<meta charset="utf-8" />
+<title>Login Page Version2.28</title>
+<!-- include css -->
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<script src="/static/jses/user.js"></script>
+<script src="/static/jses/online.js"></script>
+<style>
+	input{
+		padding:.7em;
+		line-height:1.65em;
+		font-size:1.31em;
+	}
+</style>
+</head>
+<body>
+<header>
+<h2>用户登录</h2>
+</header>
+<form name="loginf" action="/myapp/login.py" method="POST">
+<input type="text" class="hide" name="client_time" />
+<p>用户: &nbsp;&nbsp;<input type="text" name="login_name" /><p>
+<p>口令: &nbsp;&nbsp;<input type="password" name="password" /></p>
+<p><input type="reset" value="清除"/> &nbsp;&nbsp;&nbsp;<input value="提交" type="submit" /></p>
+</form>
+<br />
+<footer>
+<span id="response"> </span>
+</footer>
+<script>
+function return_request_from(){
+	if(typeof document.cookie != 'undefined'){//supports cookie.
+		var url = DOMhelp.getACookieValue('login_request_from');
+		if(url != null){
+			setTimeout('document.location.href="'+url+'"',500);
+		}else{
+//			setTimeout("document.location.replace('http://192.168.0.110/static/index.html');",500);
+			setTimeout("document.location.replace('/static/index.html');",500);
+		}
+	}else if(typeof window.sessionStorage != 'undefined'){
+		var url = sessionStorage['login_request_from'];
+		if(url != null){
+			setTimeout('document.location.href="'+url+'"',500);
+		}else{
+			//setTimeout("document.location.replace('http://192.168.0.110/static/index.html');",500);
+			setTimeout("document.location.replace('/static/index.html');",500);
+		}
+	}else{
+		alert('Your Browser Either Support Cookie Nor SessionStorage,Can Not Login.');
+		//setTimeout("document.location.replace('http://192.168.0.110/static/index.html');",500);
+		setTimeout("document.location.replace('/static/index.html');",500);
+	}
+}
+
+
+DOMhelp.addEvent(document.loginf,'submit',onSubmitForm,false);
+var response = document.getElementById("response");
+if(typeof document.cookie != 'undefined'){
+	if(DOMhelp.getACookieValue('isValid')==="1"){
+		response.innerHTML='<p>当前状态：已登录</p>';
+	}else{
+		response.innerHTML='<p>当前状态：未登录</p>';
+	}
+}else if(typeof window.sessionStorage != 'undefined'){
+	if(sessionStorage['isValid']==='1'){
+		response.innerHTML='<p>当前状态：已登录</p>';
+	}else{
+		response.innerHTML='<p>当前状态：未登录</p>';
+	}
+}else{
+		response.innerHTML='<p>Browser Not Support Login Method</p>';
+}
+
+function offlineLogin(offline_user,offlinePassword){
+	if(document.cookie!==undefined){//support cookie
+		DOMhelp.addCookie('user',offline_user);
+		DOMhelp.addCookie('offlinePassword',offlinePassword);
+		DOMhelp.addCookie('isValid','1');
+		return_request_from();
+	}else if(window.sessionStorage!==undefined){
+		sessionStorage['user'] = offline_user;
+		sessionStorage['offlinePassword'] = offlinePassword;
+		sessionStorage['isValid']='1';
+		return_request_from();
+	}else{
+		alert('Your Browser Either Support Cookie Nor SessionStorage,Can Not Login.');
+	}
+}
+
+function ajaxLogin(url,values){
+		function callback(server_data){
+//get stat
+			var stat = server_data.split(';')[0].split('=')[1];
+//get reason
+			var reason = server_data.split(';')[1].split('=')[1];
+//get user(login_name)
+
+			if(parseInt(stat)){
+//get user
+				var user = server_data.split(';')[2].split('=')[1];
+//get difference seconds between client and server's time
+				var diff_time = Number(server_data.split(';')[3].split('=')[1]);
+				if(diff_time>5)//too difference must alert.
+					alert('must check your system time,your browser time is difference server time:' + diff_time + ' seconds.');
+				if(typeof(document.cookie)!='undefined'){
+					DOMhelp.addCookie('isValid','1');	
+					DOMhelp.addCookie('user',user);
+					//response.innerHTML = '<p><a href="/static/index.html">return index page</a></p>';	
+					return_request_from();
+				}else if(typeof window.sessionStorage != 'undefined'){
+					sessionStorage['isValid']='1';
+					sessionStorage['user'] = user;
+				}
+			}else{
+				DOMhelp.addCookie('isValid','0');
+				response.innerHTML = ('*login failure.because:' + reason).bold().fontcolor('red');
+			}
+		}
+		//start HTTP_POST via AJAX.
+		HTTP.post(url,values,callback);
+}
+function onSubmitForm(e){
+//first check if now is OFFLINE
+	if(!ifonline() || !navigator.onLine){
+		if(confirm('Your Browser Current Status Is "OFFLINE",Are You Still Want To Login?')){
+			var user = document.loginf.login_name.value;
+			var passwd = document.loginf.password.value; 
+			offlineLogin(user,passwd);	
+			e.preventDefault();
+		}else{
+			e.preventDefault();
+		}
+		return false;
+	}
+//till here,is ONLINE status.
+	if(window.XMLHttpRequest || window.ActiveXObject){//if supports Ajax.
+		ajaxLogin('/myapp/login.py',{client_time:Math.round(Date.parse(new Date())/1000),login_name:document.loginf.login_name.value,password:document.loginf.password.value});
+		e.preventDefault();
+	}else{//Not Supports Ajax. 
+		return true;
+	}
+}
+</script>
+
+</body></html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+<meta charset="utf-8" />
+<title>template of html page(for troubleshoot dyj)</title>
+<!-- include css -->
+<link rel="stylesheet" type="text/css" href="/static/csses/base.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="/static/csses/Commonform.css" media="screen" />
+
+<!-- include DOMhel.js,so this document can use a global var:DOMhelp -->
+<script src="/static/jses/Deyijia.1.7.js"></script>
+<style>
+
+</style>
+</head>
+
+<body>
+
+<!-- DOMhelp function -->
+<script>
+
+</script>
+</body></html>

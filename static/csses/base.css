@@ -1,0 +1,42 @@
+/* for all */
+body{
+	width:100%;
+	padding:0;
+	margin:0;
+	word-wrap:break-word;
+	word-break:break-all;
+	background-color:#ffffff;
+	text-align:center;
+}
+header,footer,article,section{
+	display:block;
+}
+header,footer{
+	width:85%;
+	background-color:#8a8a8a;
+	color:white;
+	font-size:1.0em;
+	margin:auto;
+	padding:2em;
+}
+section a{
+	text-decoration:none;
+}
+footer{
+	height:4.5em;
+}
+
+article{
+	background-color:#fff; 
+	width:99%;
+	padding:.45em;
+	margin:auto;
+}
+.hide{
+	display:none;
+}
+.warnning{
+	border: 1px solid #000;
+	color: #f10000;
+	text-decoration:underline;
+}
