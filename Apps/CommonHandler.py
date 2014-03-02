@@ -37,7 +37,7 @@ import cgitb;cgitb.enable()
 import sqlite3
 
 # If You Change 'Site-Package' ,remark below line(ROOTDIR)!
-ROOTDIR = 'E:/WWW/'
+ROOTDIR = '/var/WWW/'
 APPDIR = ROOTDIR + 'myapp/'
 # execute file,then get env['mobile_template']
 execfile(APPDIR + 'mobile.template')

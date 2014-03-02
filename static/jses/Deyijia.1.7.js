@@ -1,3 +1,11 @@
+/*
+* pre version is base on DOMhelp.js
+* include CommonTable.js and some tools.
+* at last they became a collection -- Deyijia.js
+*
+*/
+
+
 /* 
 * DOMhelp version 2.6
 * new invisit 2013/11
