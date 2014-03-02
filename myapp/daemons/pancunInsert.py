@@ -1,4 +1,4 @@
-#! E:\Python27\python.exe
+#!/usr/bin/env python
 #coding=utf-8
 
 # script name : pancunServer.py (version 1.1)

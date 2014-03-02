@@ -1,4 +1,4 @@
-#! E:\Python27\python.exe
+#!/usr/bin/env python
 
 # client-side: /static/login.html
 # written by Alan Dershowitz 2013/11/29

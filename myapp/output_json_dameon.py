@@ -1,4 +1,4 @@
-#! C:\Python27\python.exe
+#!/usr/bin/env python
 # reference (client) static/ajax.html
 json_data = {"flag":"server-2013","passwd":"1234567","article":"server environ args"}
 
