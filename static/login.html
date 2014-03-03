@@ -21,7 +21,7 @@
 <header>
 <h2>用户登录</h2>
 </header>
-<form name="loginf" action="/myapp/login.py" method="POST">
+<form name="loginf" action="/Apps/login.py" method="POST">
 <input type="text" class="hide" name="client_time" />
 <p>用户: &nbsp;&nbsp;<input type="text" name="login_name" /><p>
 <p>口令: &nbsp;&nbsp;<input type="password" name="password" /></p>
@@ -138,7 +138,7 @@ function onSubmitForm(e){
 	}
 //till here,is ONLINE status.
 	if(window.XMLHttpRequest || window.ActiveXObject){//if supports Ajax.
-		ajaxLogin('/myapp/login.py',{client_time:Math.round(Date.parse(new Date())/1000),login_name:document.loginf.login_name.value,password:document.loginf.password.value});
+		ajaxLogin('/Apps/login.py',{client_time:Math.round(Date.parse(new Date())/1000),login_name:document.loginf.login_name.value,password:document.loginf.password.value});
 		e.preventDefault();
 	}else{//Not Supports Ajax. 
 		return true;

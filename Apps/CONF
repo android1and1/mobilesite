@@ -1,5 +1,5 @@
 #if site-root is modified,just override this variable -- 'ROOTDIR'
-ROOTDIR="E:\\WWW\\"
-#TEMPDIR="C:\\Program Files\\Apache Software Foundation\\Apache2.2\\htdocs\\myapp\\templates\\"
-TEMPDIR = ROOTDIR + "myapp\\templates\\"
-STATICDIR= ROOTDIR + "myapp\\static\\files\\"
+# ROOTDIR="E:\\WWW\\"  (Windows Old Version Setup)
+ROOTDIR="/var/www/"
+TEMPDIR = ROOTDIR + "Apps/templates/"
+STATICDIR= ROOTDIR + "Apps/static/files" 
