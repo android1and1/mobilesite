@@ -3,26 +3,29 @@
 	ServerAdmin raspberrypi@yeah.net 
 	ServerName www.raspi.cn
 
-	DocumentRoot /var/www
+	DocumentRoot /var/www/mobilesite
 	<Directory />
 		Options FollowSymLinks
 		AllowOverride None
 	</Directory>
-	<Directory /var/www/>
+	<Directory /var/www/mobilesite>
 		Options Indexes FollowSymLinks MultiViews
 		AllowOverride None
 		Order allow,deny
 		allow from all
 	</Directory>
 
+# static,media as aliases
+	Alias	/staic	/var/www/mobilesite/static
+	Alias 	/media	/var/www/mobilesite/media
+
+# cgi-bin 
 #	ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
 	ScriptAlias /cgi-bin/ /var/www/cgi-bin/
+
 # py script
 	WSGIScriptAlias /Apps	/var/www/mobilesite/Apps
 
-# static,media as aliases
-	Alias	/staic/	/var/www/mobilesite/static/
-	Alias 	/media/	/var/www/mobilesite/media/
 
 # media 
 	<Directory /media/>

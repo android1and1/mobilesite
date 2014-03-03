@@ -1,0 +1,35 @@
+pull new data from branch:origin/Linux
+# ready for commit "verson2.0" (Linux Branch)
+start setup mod_wsgi + apache2 + python
+now,mod_wsgi.so will hook the python2.7mod.dont worry about version-problem.
+use lynx
+lynx localhost/Apps/testscript.py
+say good.
+
+
+**
+be carefull for '/etc/apache2/sites-enable/000-default'
+** 
+
+in line about 'DocumentRoot' , it defined '/'
+	DocumentRoot /var/www/mobilesite
+
+**
+iptables always forgot most often machine as a workstation before.
+# iptables -A INPUT  -i wlan0 -s 192.168.2.0/24 -p tcp --dport 80 -j ACCEPT
+**
+
+**
+if git-respostity is same as /var/www/SITEPAKAGE,must more becarefull,so i start to think 
+it not a good idea,let /var/www/... as a git resposity.
+**
+
+**
+if really do above thing (git/WWW)
+make some rulers for ####.gitignore#### ,because a site-package's data-dir data-file change very
+PingFa
+**
+
+** 
+need commit,so much things will forgot if not commit.
+**
