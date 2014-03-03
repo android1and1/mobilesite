@@ -1,12 +1,11 @@
 # DIRROOT/PROJECT:mobilesite
 # version 3.0
 # Written By Alan Deshowitz, Fri Feb 28 13:31:40     2014
-# commited to github.com at 2014/2/28 via 'Maple Touch' (workstation)
-# only two branches:Linux and Windows
-# linux platform needs some difference from windows.
-# two diff branch keep developing,till finished,then master will merge them. 
+# first commited to github.com at 2014/2/28 via 'Maple Touch' (workstation)
+# now raspberry pi machine fetch and push servial commits.
+# now,it is two branches:master and Windows('W' not 'w')
+# master branch is linux platform (Debian wheezy)
 
-#there are a lot of jobs will handle for this project -- mobilesite
 REQUIRES: 
 ====== windows platform ==========
 (os)XP,win7
@@ -21,7 +20,7 @@ python 2.6+
 apache2.2+
 mysql
 git-core
-
+mod_wsgi (it is contains pythn2.6 and python2.7 so) 
 
 TARGET:
 make a www site for mobile-like client.can upload client data.
@@ -37,12 +36,257 @@ this version can give a platform to do these things(below):
 
 
 STRUCT:
-1)app(see /myapp/../..)
+*** always change,so it will be difference from real setup ***
+1)Root Directory 	 /var/www/mobilesite/  as '/'
+2)Apps 
 2)resources
 3)help-scripts
 
+(see below figure)
+.
+├── Apache2-config
+│   ├── apache2.conf
+│   ├── conf.d
+│   │   ├── charset
+│   │   ├── localized-error-pages
+│   │   ├── other-vhosts-access-log
+│   │   └── security
+│   ├── envvars
+│   ├── magic
+│   ├── mods-available
+│   │   ├── actions.conf
+│   │   ├── actions.load
+│   │   ├── alias.conf
+│   │   ├── alias.load
+│   │   ├── asis.load
+│   │   ├── auth_basic.load
+│   │   ├── auth_digest.load
+│   │   ├── authn_alias.load
+│   │   ├── authn_anon.load
+│   │   ├── authn_dbd.load
+│   │   ├── authn_dbm.load
+│   │   ├── authn_default.load
+│   │   ├── authn_file.load
+│   │   ├── authnz_ldap.load
+│   │   ├── authz_dbm.load
+│   │   ├── authz_default.load
+│   │   ├── authz_groupfile.load
+│   │   ├── authz_host.load
+│   │   ├── authz_owner.load
+│   │   ├── authz_user.load
+│   │   ├── autoindex.conf
+│   │   ├── autoindex.load
+│   │   ├── cache.load
+│   │   ├── cern_meta.load
+│   │   ├── cgid.conf
+│   │   ├── cgid.load
+│   │   ├── cgi.load
+│   │   ├── charset_lite.load
+│   │   ├── dav_fs.conf
+│   │   ├── dav_fs.load
+│   │   ├── dav.load
+│   │   ├── dav_lock.load
+│   │   ├── dbd.load
+│   │   ├── deflate.conf
+│   │   ├── deflate.load
+│   │   ├── dir.conf
+│   │   ├── dir.load
+│   │   ├── disk_cache.conf
+│   │   ├── disk_cache.load
+│   │   ├── dump_io.load
+│   │   ├── env.load
+│   │   ├── expires.load
+│   │   ├── ext_filter.load
+│   │   ├── file_cache.load
+│   │   ├── filter.load
+│   │   ├── headers.load
+│   │   ├── ident.load
+│   │   ├── imagemap.load
+│   │   ├── include.load
+│   │   ├── info.conf
+│   │   ├── info.load
+│   │   ├── ldap.conf
+│   │   ├── ldap.load
+│   │   ├── log_forensic.load
+│   │   ├── mem_cache.conf
+│   │   ├── mem_cache.load
+│   │   ├── mime.conf
+│   │   ├── mime.load
+│   │   ├── mime_magic.conf
+│   │   ├── mime_magic.load
+│   │   ├── negotiation.conf
+│   │   ├── negotiation.load
+│   │   ├── proxy_ajp.load
+│   │   ├── proxy_balancer.conf
+│   │   ├── proxy_balancer.load
+│   │   ├── proxy.conf
+│   │   ├── proxy_connect.load
+│   │   ├── proxy_ftp.conf
+│   │   ├── proxy_ftp.load
+│   │   ├── proxy_http.load
+│   │   ├── proxy.load
+│   │   ├── proxy_scgi.load
+│   │   ├── reqtimeout.conf
+│   │   ├── reqtimeout.load
+│   │   ├── rewrite.load
+│   │   ├── setenvif.conf
+│   │   ├── setenvif.load
+│   │   ├── speling.load
+│   │   ├── ssl.conf
+│   │   ├── ssl.load
+│   │   ├── status.conf
+│   │   ├── status.load
+│   │   ├── substitute.load
+│   │   ├── suexec.load
+│   │   ├── unique_id.load
+│   │   ├── userdir.conf
+│   │   ├── userdir.load
+│   │   ├── usertrack.load
+│   │   ├── vhost_alias.load
+│   │   ├── wsgi.conf
+│   │   └── wsgi.load
+│   ├── mods-enabled
+│   │   ├── alias.conf -> ../mods-available/alias.conf
+│   │   ├── alias.load -> ../mods-available/alias.load
+│   │   ├── auth_basic.load -> ../mods-available/auth_basic.load
+│   │   ├── authn_file.load -> ../mods-available/authn_file.load
+│   │   ├── authz_default.load -> ../mods-available/authz_default.load
+│   │   ├── authz_groupfile.load -> ../mods-available/authz_groupfile.load
+│   │   ├── authz_host.load -> ../mods-available/authz_host.load
+│   │   ├── authz_user.load -> ../mods-available/authz_user.load
+│   │   ├── autoindex.conf -> ../mods-available/autoindex.conf
+│   │   ├── autoindex.load -> ../mods-available/autoindex.load
+│   │   ├── cgid.conf -> ../mods-available/cgid.conf
+│   │   ├── cgid.load -> ../mods-available/cgid.load
+│   │   ├── deflate.conf -> ../mods-available/deflate.conf
+│   │   ├── deflate.load -> ../mods-available/deflate.load
+│   │   ├── dir.conf -> ../mods-available/dir.conf
+│   │   ├── dir.load -> ../mods-available/dir.load
+│   │   ├── env.load -> ../mods-available/env.load
+│   │   ├── mime.conf -> ../mods-available/mime.conf
+│   │   ├── mime.load -> ../mods-available/mime.load
+│   │   ├── negotiation.conf -> ../mods-available/negotiation.conf
+│   │   ├── negotiation.load -> ../mods-available/negotiation.load
+│   │   ├── reqtimeout.conf -> ../mods-available/reqtimeout.conf
+│   │   ├── reqtimeout.load -> ../mods-available/reqtimeout.load
+│   │   ├── setenvif.conf -> ../mods-available/setenvif.conf
+│   │   ├── setenvif.load -> ../mods-available/setenvif.load
+│   │   ├── status.conf -> ../mods-available/status.conf
+│   │   ├── status.load -> ../mods-available/status.load
+│   │   ├── wsgi.conf -> ../mods-available/wsgi.conf
+│   │   └── wsgi.load -> ../mods-available/wsgi.load
+│   ├── ports.conf
+│   ├── sites-available
+│   │   ├── default
+│   │   └── default-ssl
+│   └── sites-enabled
+│       └── 000-default -> ../sites-available/default
+├── Apps
+│   ├── backup.together
+│   ├── change_windows_to_linux.sh
+│   ├── CommonHandler.py
+│   ├── CONF
+│   ├── daemons
+│   │   ├── change_windows_to_linux.sh
+│   │   ├── fetch1good.py
+│   │   ├── fetchgoods.py
+│   │   ├── goodlist.py
+│   │   ├── ins_sqlite3.py
+│   │   ├── pancunInsert.py
+│   │   ├── pancunSelect.py
+│   │   ├── pancunServer.py
+│   │   ├── parse_post.cgi
+│   │   ├── querydetails.py
+│   │   └── query_partnumber.py
+│   ├── demoOfCommonHandler.py
+│   ├── Details.template.html
+│   ├── eventsourcetest.py
+│   ├── HTTP_DETAILS_TEMPLATE
+│   ├── HTTP_FOOTER
+│   ├── HTTP_HEADER
+│   ├── imp2.py
+│   ├── imp3.py
+│   ├── json_daemon.py
+│   ├── login.py
+│   ├── mobile.template
+│   ├── output_json_dameon.py
+│   ├── sorted_all_goods.cvs
+│   ├── templates
+│   │   ├── base.template
+│   │   └── static.template
+│   ├── test_if_wsgi_mod_good.py
+│   ├── together.db
+│   └── treat_upload_daemon.py
+├── build_logs
+│   ├── build.0
+│   ├── build.1
+│   ├── rasp.log.4
+│   ├── rasp.log.5
+│   └── rasp.log.6
+├── favicon.ico
+├── index.html
+├── media
+│   └── imgs
+│       ├── good34.jpg
+│       ├── good52.jpg
+│       ├── good55.jpg
+│       ├── good57.jpg
+│       ├── good58.jpg
+│       ├── good62.jpg
+│       ├── good64.jpg
+│       └── good65.jpg
+├── mobile_size.txt
+├── nginx-config
+│   └── notice
+├── Python-config
+│   └── python.version
+├── README
+├── static
+│   ├── csses
+│   │   ├── base.css
+│   │   ├── CommonForm.css
+│   │   ├── details.css
+│   │   └── wsgi.base.css
+│   ├── daemons
+│   │   ├── ajax.html
+│   │   ├── anly.html
+│   │   ├── breakpage.html
+│   │   ├── daemon.html
+│   │   ├── fetch1good.html
+│   │   ├── fetchgoods.html
+│   │   ├── getok.html
+│   │   ├── index2.html
+│   │   ├── input_and_getScript.utf8.html
+│   │   ├── ins_sqlite3.html
+│   │   ├── jsonp.html
+│   │   ├── login_test.html
+│   │   ├── pajax.html
+│   │   ├── parsejson.html
+│   │   ├── speicalForm.js
+│   │   └── table_page_nav.html
+│   ├── html_template
+│   ├── ifsupport.html
+│   ├── index.html
+│   ├── jses
+│   │   ├── CommonTable.js
+│   │   ├── Deyijia.1.7.js
+│   │   ├── domhelp.alt.txt
+│   │   ├── DOMhelp.js
+│   │   ├── goodbase.js
+│   │   ├── goodbase.sampledata.js
+│   │   ├── HHFfso.js
+│   │   ├── HTTP.js
+│   │   ├── ifsupport.js
+│   │   ├── instead_online.js
+│   │   ├── itemdata.js
+│   │   ├── Mobile.js
+│   │   ├── online.js
+│   │   ├── user.js
+│   │   └── Widget.js
+│   ├── login.html
+│   ├── pancun.html
+│   └── query_partnumber.html
+└── tools
+    └── sendmail
 
-
-
-
-
+19 directories, 225 files
