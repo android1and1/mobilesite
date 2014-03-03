@@ -1,0 +1,78 @@
+<VirtualHost *:80>
+#	ServerAdmin webmaster@localhost
+	ServerAdmin raspberrypi@yeah.net 
+	ServerName www.raspi.cn
+
+	DocumentRoot /var/www
+	<Directory />
+		Options FollowSymLinks
+		AllowOverride None
+	</Directory>
+	<Directory /var/www/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+
+#	ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
+	ScriptAlias /cgi-bin/ /var/www/cgi-bin/
+# py script
+	WSGIScriptAlias /Apps	/var/www/mobilesite/Apps
+
+# static,media as aliases
+	Alias	/staic/	/var/www/mobilesite/static/
+	Alias 	/media/	/var/www/mobilesite/media/
+
+# media 
+	<Directory /media/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+	<Directory /var/www/mobilesite/media/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+
+#static
+	<Directory /static/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+	<Directory /var/www/mobilesite/static/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+	#<Directory "/usr/lib/cgi-bin">
+	<Directory "/var/www/cgi-bin">
+		AllowOverride None
+		Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+		Order allow,deny
+		Allow from all
+	</Directory>
+
+	<Directory /var/www/mobilesite/Apps>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+	ErrorLog ${APACHE_LOG_DIR}/rasp.error.log
+	CustomLog ${APACHE_LOG_DIR}/rasp.access.log common
+
+	# Possible values include: debug, info, notice, warn, error, crit,
+	# alert, emerg.
+	LogLevel warn
+
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+	# below is not nessary ,because in /etc/mime.types contains this.
+	# AddType text/html .py
+</VirtualHost>
