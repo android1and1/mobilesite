@@ -1,3 +1,4 @@
 # as a branch of original,/Common/ is not nessary
-Common/
 Apps/together.db
+*.db
+build_logs/
