@@ -1,10 +1,22 @@
 # DIRROOT/PROJECT:mobilesite
 # version 3.0
 # Written By Alan Deshowitz, Fri Feb 28 13:31:40     2014
+# this README base Linux Platform,windows can reference this,and do some adjust.
+# some attribute is base on raspberry pi.
+# whole project be a git-resposity hosted by github.com
+# github accout:
+#	git@github.com:android1and1/mobilesite(SSH)
+#	https://github.com/android1and1/mobilesite
+# 	git://github.com/android1and1/mobilesite
+# master branch is base on linux platform(Debian Wheezy)
+# Windows branch is base on Windows platform(XP)
+# now tracking branch:
+# 	ultrabook:virtualmachine
+#	pi@raspberrypi:~pi/Workspace/mobilesite
+#	MapleTouch@workstation:
 # first commited to github.com at 2014/2/28 via 'Maple Touch' (workstation)
 # now raspberry pi machine fetch and push servial commits.
 # now,it is two branches:master and Windows('W' not 'w')
-# master branch is linux platform (Debian wheezy)
 
 REQUIRES: 
 ====== windows platform ==========
@@ -13,6 +25,7 @@ python 2.7+
 apache2.2+(include mod_wsgi.so)
 mysql
 msysgit(include shell .exe file)
+(option)idle  
 
 ========= linux platform ========
 (os)Ubuntu9.10+ debian-wheezy
@@ -21,6 +34,8 @@ apache2.2+
 mysql
 git-core
 mod_wsgi (it is contains pythn2.6 and python2.7 so) 
+(option) ipython
+(option) python-pip
 
 TARGET:
 make a www site for mobile-like client.can upload client data.
@@ -34,268 +49,206 @@ this version can give a platform to do these things(below):
 7)check sale lists(customers)
 8)check each worker's effective.
 
+#################################
+	HOWTO:SETUP A SITE
+#################################
 
-STRUCT:
+step1)GIT CLONE(GET RESPOSITY)
+
+from our remote resposity,pull packages into our machine,there are 3 ways do this purpose:
+	https://github.com/android1and1/mobilesite.git(1)
+or
+	git://github.com/android1and1/mobilesite.git(2)
+or
+	git@github.com:android1and1/mobilesite.git(3)
+* if want (3)way do this work,have to get id_rsa and id_rsa.pub(peer) file,
+* now ,Maple Touch,Raspberry pi,Ultrabook has them.they all can use (3)way.in fact,is SSH
+WorkSpace is where our local git resposity. in this case,it is '/home/pi/WorkSpace/'
+	$ cd WorkSpace
+	$ git clone git@github.com:android1and1/mobilesite.git 
+	
+after done,we got a struct a little like.
+	mobilesite/
+	├── Apache2-config
+	├── Apps
+	├── favicon.ico
+	├── index.html
+	├── media
+	├── mobile_size.txt
+	├── nginx-config
+	├── Python-config
+	├── README
+	├── SampleData
+	├── static
+	└── tools
+
+	9 directories, 4 files
+
+now,We have whole datas.We can develop or update this resposity.
+sample:
+	git fetch origin 
+or
+	git pull origin
+or(we suggest)
+	git checkout -b newbranch
+	git pull origin 
+more detail reference gittutorial.
+
+step2)COPY PACKAGE IN APACHE HOSTED DIRECTORY
+
+We will copy datas,package to our real site.
+need check git status first,via 'cd ~pi/Workspace/mobilesite && git status'
+real site ----in this case --- hosted in '/var/www/'.
+	$ sudo cp ~pi/Workspace/mobilesite /var/www/
+chown to 'www-data'(apache account)
+	$ sudo chown www-data:www-data -R /var/www/mobilesite/
+
+These are not nessary for build site(but keep these is not hamful):
+
+	Apache2-config
+	README
+	tools
+	mobile-size.txt
+
+because it not a resposity,we need rm something:
+	$ rm -rf .git
+	$ rm -rf .gitignore
+
+step3)APACHE SETTINGS
+
+not like some version of linux-distribution,debian wheezy(rasp os).
+almost do nothing in apache2/apache2.conf.because in '/etc/mime.types',include 'text/html .py' it is our need,we are use python,right?
+about application cache,yes,it do it already,in '/etc/mime.types' too.
+no need write 'load module mod_wsgi' in conf file again.,because we 'apt-get install libappache2_mod_wsgi',it includes in 'apache2/mods-enabled/wsgi.{conf,load}'.
+in apache2/sites-enabled/000-default
+setup virtual server,starts with <VirtualHost>
+below is my machine now look:
+
+=======/etc/apache2/sites-enabled/000default =====
+
+		ServerAdmin raspberrypi@raspi.fellow5.cn 
+		ServerName raspi.fellow5.cn 
+		DocumentRoot /var/www/mobilesite
+		<Directory />
+			Options FollowSymLinks
+			AllowOverride None
+		</Directory>
+		<Directory /var/www/mobilesite>
+			Options Indexes FollowSymLinks MultiViews
+			AllowOverride None
+			Order allow,deny
+			allow from all
+		</Directory>
+	# static,media as aliases
+		Alias	/staic	/var/www/mobilesite/static
+		Alias 	/media	/var/www/mobilesite/media
+
+	# cgi-bin 
+	#	ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
+		ScriptAlias /cgi-bin/ /var/www/cgi-bin/
+
+	# py script
+		WSGIScriptAlias /Apps	/var/www/mobilesite/Apps
+	# media 
+		<Directory /media/>
+			Options Indexes FollowSymLinks MultiViews
+			AllowOverride None
+			Order allow,deny
+			allow from all
+		</Directory>
+		<Directory /var/www/mobilesite/media/>
+			Options Indexes FollowSymLinks MultiViews
+			AllowOverride None
+			Order allow,deny
+			allow from all
+		</Directory>
+	#static
+		<Directory /static/>
+			Options Indexes FollowSymLinks MultiViews
+			AllowOverride None
+			Order allow,deny
+			allow from all
+		</Directory>
+		<Directory /var/www/mobilesite/static/>
+			Options Indexes FollowSymLinks MultiViews
+			AllowOverride None
+			Order allow,deny
+			allow from all
+		</Directory>
+		<Directory "/var/www/cgi-bin">
+			AllowOverride None
+			Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+			Order allow,deny
+			Allow from all
+		</Directory>
+		<Directory /var/www/mobilesite/Apps>
+			Options Indexes FollowSymLinks MultiViews
+			AllowOverride None
+			Order allow,deny
+			allow from all
+		</Directory>
+		ErrorLog ${APACHE_LOG_DIR}/rasp.error.log
+		CustomLog ${APACHE_LOG_DIR}/rasp.access.log common
+
+		# Possible values include: debug, info, notice, warn, error, crit,
+		# alert, emerg.
+		LogLevel warn
+		CustomLog ${APACHE_LOG_DIR}/access.log combined
+		# below is not nessary ,because in /etc/mime.types contains this.
+		# AddType text/html .py
+	</VirtualHost>
+====== 000default (end) ======
+
+test site.first use 'apache2'.
+command 'info apache2' or 'apache2 -h' will give you some useful suggest,like:
+	$ apache2 -V  ## see what args are included while compile source code of apache software.
+	$ apache2 -t  ## check syntax of all config files
+	$ apache2 -t -D DUMP_MODULES  ## check what modules are loaded now.
+	$ apache2 -t -D DUMP_VHOSTS  ## check which enabled-vhost are hosting now.
+if apache start with no erros,we can use a browser test our site.
+lynx localhost/static/index.html
+lynx localhost/Apps/pyscript.py
+(firefox) http://ipaddr/static/index.html
+
+good luck!
+
+[STRUCT]
 *** always change,so it will be difference from real setup ***
-1)Root Directory 	 /var/www/mobilesite/  as '/'
+1)Root Directory
+ 	 /var/www/mobilesite/  as '/' ## in apache config,it is 'DocumentRoot'
 2)Apps 
-2)resources
-3)help-scripts
+	/var/www/mobilesite/Apps/
+	same as MVC's Modules,via mod_wsgi can be invoked.
+3)static	
+	/var/www/static/ 
+	as static page,article...etc..will be handled by Apache	
+4)media		
+	/var/www//media
+	first we can use SampleData package's 'imgs' resource.
+5)SampleData
+    invoke 'cp':
+      cp ROOTDIRECTORY/SampleData/sample.db /var/www/mobilesite/Apps/together.db  
+      cp ROOTDIRECTORY/SampleData/media/imgs /var/www/mobilesite/media/  
+	
+	then we can got our data and sources in this site.
 
+6)help-scripts
+	in package sub class:tools package.
 (see below figure)
-.
-├── Apache2-config
-│   ├── apache2.conf
-│   ├── conf.d
-│   │   ├── charset
-│   │   ├── localized-error-pages
-│   │   ├── other-vhosts-access-log
-│   │   └── security
-│   ├── envvars
-│   ├── magic
-│   ├── mods-available
-│   │   ├── actions.conf
-│   │   ├── actions.load
-│   │   ├── alias.conf
-│   │   ├── alias.load
-│   │   ├── asis.load
-│   │   ├── auth_basic.load
-│   │   ├── auth_digest.load
-│   │   ├── authn_alias.load
-│   │   ├── authn_anon.load
-│   │   ├── authn_dbd.load
-│   │   ├── authn_dbm.load
-│   │   ├── authn_default.load
-│   │   ├── authn_file.load
-│   │   ├── authnz_ldap.load
-│   │   ├── authz_dbm.load
-│   │   ├── authz_default.load
-│   │   ├── authz_groupfile.load
-│   │   ├── authz_host.load
-│   │   ├── authz_owner.load
-│   │   ├── authz_user.load
-│   │   ├── autoindex.conf
-│   │   ├── autoindex.load
-│   │   ├── cache.load
-│   │   ├── cern_meta.load
-│   │   ├── cgid.conf
-│   │   ├── cgid.load
-│   │   ├── cgi.load
-│   │   ├── charset_lite.load
-│   │   ├── dav_fs.conf
-│   │   ├── dav_fs.load
-│   │   ├── dav.load
-│   │   ├── dav_lock.load
-│   │   ├── dbd.load
-│   │   ├── deflate.conf
-│   │   ├── deflate.load
-│   │   ├── dir.conf
-│   │   ├── dir.load
-│   │   ├── disk_cache.conf
-│   │   ├── disk_cache.load
-│   │   ├── dump_io.load
-│   │   ├── env.load
-│   │   ├── expires.load
-│   │   ├── ext_filter.load
-│   │   ├── file_cache.load
-│   │   ├── filter.load
-│   │   ├── headers.load
-│   │   ├── ident.load
-│   │   ├── imagemap.load
-│   │   ├── include.load
-│   │   ├── info.conf
-│   │   ├── info.load
-│   │   ├── ldap.conf
-│   │   ├── ldap.load
-│   │   ├── log_forensic.load
-│   │   ├── mem_cache.conf
-│   │   ├── mem_cache.load
-│   │   ├── mime.conf
-│   │   ├── mime.load
-│   │   ├── mime_magic.conf
-│   │   ├── mime_magic.load
-│   │   ├── negotiation.conf
-│   │   ├── negotiation.load
-│   │   ├── proxy_ajp.load
-│   │   ├── proxy_balancer.conf
-│   │   ├── proxy_balancer.load
-│   │   ├── proxy.conf
-│   │   ├── proxy_connect.load
-│   │   ├── proxy_ftp.conf
-│   │   ├── proxy_ftp.load
-│   │   ├── proxy_http.load
-│   │   ├── proxy.load
-│   │   ├── proxy_scgi.load
-│   │   ├── reqtimeout.conf
-│   │   ├── reqtimeout.load
-│   │   ├── rewrite.load
-│   │   ├── setenvif.conf
-│   │   ├── setenvif.load
-│   │   ├── speling.load
-│   │   ├── ssl.conf
-│   │   ├── ssl.load
-│   │   ├── status.conf
-│   │   ├── status.load
-│   │   ├── substitute.load
-│   │   ├── suexec.load
-│   │   ├── unique_id.load
-│   │   ├── userdir.conf
-│   │   ├── userdir.load
-│   │   ├── usertrack.load
-│   │   ├── vhost_alias.load
-│   │   ├── wsgi.conf
-│   │   └── wsgi.load
-│   ├── mods-enabled
-│   │   ├── alias.conf -> ../mods-available/alias.conf
-│   │   ├── alias.load -> ../mods-available/alias.load
-│   │   ├── auth_basic.load -> ../mods-available/auth_basic.load
-│   │   ├── authn_file.load -> ../mods-available/authn_file.load
-│   │   ├── authz_default.load -> ../mods-available/authz_default.load
-│   │   ├── authz_groupfile.load -> ../mods-available/authz_groupfile.load
-│   │   ├── authz_host.load -> ../mods-available/authz_host.load
-│   │   ├── authz_user.load -> ../mods-available/authz_user.load
-│   │   ├── autoindex.conf -> ../mods-available/autoindex.conf
-│   │   ├── autoindex.load -> ../mods-available/autoindex.load
-│   │   ├── cgid.conf -> ../mods-available/cgid.conf
-│   │   ├── cgid.load -> ../mods-available/cgid.load
-│   │   ├── deflate.conf -> ../mods-available/deflate.conf
-│   │   ├── deflate.load -> ../mods-available/deflate.load
-│   │   ├── dir.conf -> ../mods-available/dir.conf
-│   │   ├── dir.load -> ../mods-available/dir.load
-│   │   ├── env.load -> ../mods-available/env.load
-│   │   ├── mime.conf -> ../mods-available/mime.conf
-│   │   ├── mime.load -> ../mods-available/mime.load
-│   │   ├── negotiation.conf -> ../mods-available/negotiation.conf
-│   │   ├── negotiation.load -> ../mods-available/negotiation.load
-│   │   ├── reqtimeout.conf -> ../mods-available/reqtimeout.conf
-│   │   ├── reqtimeout.load -> ../mods-available/reqtimeout.load
-│   │   ├── setenvif.conf -> ../mods-available/setenvif.conf
-│   │   ├── setenvif.load -> ../mods-available/setenvif.load
-│   │   ├── status.conf -> ../mods-available/status.conf
-│   │   ├── status.load -> ../mods-available/status.load
-│   │   ├── wsgi.conf -> ../mods-available/wsgi.conf
-│   │   └── wsgi.load -> ../mods-available/wsgi.load
-│   ├── ports.conf
-│   ├── sites-available
-│   │   ├── default
-│   │   └── default-ssl
-│   └── sites-enabled
-│       └── 000-default -> ../sites-available/default
-├── Apps
-│   ├── backup.together
-│   ├── change_windows_to_linux.sh
-│   ├── CommonHandler.py
-│   ├── CONF
-│   ├── daemons
-│   │   ├── change_windows_to_linux.sh
-│   │   ├── fetch1good.py
-│   │   ├── fetchgoods.py
-│   │   ├── goodlist.py
-│   │   ├── ins_sqlite3.py
-│   │   ├── pancunInsert.py
-│   │   ├── pancunSelect.py
-│   │   ├── pancunServer.py
-│   │   ├── parse_post.cgi
-│   │   ├── querydetails.py
-│   │   └── query_partnumber.py
-│   ├── demoOfCommonHandler.py
-│   ├── Details.template.html
-│   ├── eventsourcetest.py
-│   ├── HTTP_DETAILS_TEMPLATE
-│   ├── HTTP_FOOTER
-│   ├── HTTP_HEADER
-│   ├── imp2.py
-│   ├── imp3.py
-│   ├── json_daemon.py
-│   ├── login.py
-│   ├── mobile.template
-│   ├── output_json_dameon.py
-│   ├── sorted_all_goods.cvs
-│   ├── templates
-│   │   ├── base.template
-│   │   └── static.template
-│   ├── test_if_wsgi_mod_good.py
-│   ├── together.db
-│   └── treat_upload_daemon.py
-├── build_logs
-│   ├── build.0
-│   ├── build.1
-│   ├── rasp.log.4
-│   ├── rasp.log.5
-│   └── rasp.log.6
-├── favicon.ico
-├── index.html
-├── media
-│   └── imgs
-│       ├── good34.jpg
-│       ├── good52.jpg
-│       ├── good55.jpg
-│       ├── good57.jpg
-│       ├── good58.jpg
-│       ├── good62.jpg
-│       ├── good64.jpg
-│       └── good65.jpg
-├── mobile_size.txt
-├── nginx-config
-│   └── notice
-├── Python-config
-│   └── python.version
-├── README
-├── static
-│   ├── csses
-│   │   ├── base.css
-│   │   ├── CommonForm.css
-│   │   ├── details.css
-│   │   └── wsgi.base.css
-│   ├── daemons
-│   │   ├── ajax.html
-│   │   ├── anly.html
-│   │   ├── breakpage.html
-│   │   ├── daemon.html
-│   │   ├── fetch1good.html
-│   │   ├── fetchgoods.html
-│   │   ├── getok.html
-│   │   ├── index2.html
-│   │   ├── input_and_getScript.utf8.html
-│   │   ├── ins_sqlite3.html
-│   │   ├── jsonp.html
-│   │   ├── login_test.html
-│   │   ├── pajax.html
-│   │   ├── parsejson.html
-│   │   ├── speicalForm.js
-│   │   └── table_page_nav.html
-│   ├── html_template
-│   ├── ifsupport.html
-│   ├── index.html
-│   ├── jses
-│   │   ├── CommonTable.js
-│   │   ├── Deyijia.1.7.js
-│   │   ├── domhelp.alt.txt
-│   │   ├── DOMhelp.js
-│   │   ├── goodbase.js
-│   │   ├── goodbase.sampledata.js
-│   │   ├── HHFfso.js
-│   │   ├── HTTP.js
-│   │   ├── ifsupport.js
-│   │   ├── instead_online.js
-│   │   ├── itemdata.js
-│   │   ├── Mobile.js
-│   │   ├── online.js
-│   │   ├── user.js
-│   │   └── Widget.js
-│   ├── login.html
-│   ├── pancun.html
-│   └── query_partnumber.html
-└── tools
-    └── sendmail
 
-19 directories, 225 files
 [.gitignore]
 not track private director
 not track binary file, in this case ,not track *.db(sqlite3) file
-=========================================================================
 
-=========================================================================
+
+##########################################
+
+#############   story    #################
+
+##########################################
+
+** a long long story writen by zh_CN is build_logs/story. **
+
 # 2012/2/28 THINK
 # before moving to Raspberry Pi(router,ap,www-server,dhcp,git-client)
 1,gif for what?
@@ -303,22 +256,14 @@ myapp : contains modules,templates.
 static : resources about jpg,audio,and some static html.
 setup : network-description,apache-config(inner setup about wsgi)
 db : app-db
-javascript scripts: enhaced page's event
+javascript scripts: enhanced page's event
 
 2,modify struct.
 at development status,it is not strict for struct,names,so it is a chance to restruct,rename these thing.
 root dir:WWW 
 sub of WWW(directory),exists some files to desc stat/version/attention
-=============
+
 	1,README;2,net-desc;3,apache-config;4,nginx-config;5,python.readme;6,favicon.ico,7,site-desc
-
-
-
-
-
-
-
-
 fixed .gitignore
 let build_logs/ be a private dir.
 if we need publish these logs,can :
@@ -359,4 +304,25 @@ PingFa
 
 ** 
 need commit,so much things will forgot if not commit.
+**
+
+**
+i have two hdtv,all is 'skyworth' brand.
+1)26inch (i am using it)
+dont do anything just keep default settings(in '/boot/config.txt'),it works normally.
+2)47inch (at ballroom)
+must modify some line for display and fit the width:height
+i> if not uncomment this line,will no display:
+	#hdmi_safe=1
+ii> uncomment 'overscan' setting lines,so exprand all display area:
+	#overscan_left=-30
+	#overscan_right=-30
+	#overscan_top=-30
+	#overscan_bottom=-30
+iii>for get audio support(HDTV),uncomment this:
+	#hdmi_driver=2
+
+i test,it works,audio,font,...all right.
+by the way,in <<raspberry pi manual>>(book) says:
+hdmi_mod=14 is (w:h) 848x480 60Hz works same as 'skyworth47display.config'
 **
