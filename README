@@ -1,15 +1,15 @@
 # DIRROOT/PROJECT:mobilesite
-# version 3.0
+# version 3.1
 # Written By Alan Deshowitz, Fri Feb 28 13:31:40     2014
 # commited to github.com at 2014/2/28 via 'Maple Touch' (workstation)
 
-#there are a lot of jobs will handle for this project -- mobilesite
 REQUIRES: 
-====== windows platform ==========
-python 2.7+
+python.exe 2.7+
 apache2.2+(include mod_wsgi.so)
 mysql
 msysgit(include shell .exe file)
+idle
+
 
 ========= linux platform ========
 python 2.6+
