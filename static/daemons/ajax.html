@@ -65,7 +65,8 @@ function master(){
 		}//if-loop
 	};
 
-	req.open("GET","/doajax.py?name=what",true);
+	//req.open("GET","/doajax.py?name=what",true);
+	req.open("GET","/Apps/output_json_daemon.py",true);
 	req.send(null);   
 }
 </script>
