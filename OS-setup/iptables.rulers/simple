@@ -13,7 +13,7 @@ iptables -A INPUT -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
 iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1452 
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-AICMP="0 3 3/4 4 11 12 14 16 18"
+AICMP="0 3 3/4 4 8 11 12 14 16 18"
 for tyicmp in $AICMP
 do
 	iptables -A INPUT -i ppp0 -p icmp --icmp-type $tyicmp -j ACCEPT
@@ -25,6 +25,13 @@ iptables -A INPUT -p TCP -i ppp0 --dport 443 --sport 1024:65534 -j ACCEPT
 iptables -A INPUT -p TCP -i ppp0 --dport 110 --sport 1024:65534 -j ACCEPT 
 iptables -A INPUT -p TCP -i ppp0 --dport 53 --sport 1024:65534 -j ACCEPT 
 iptables -A INPUT -p UDP -i ppp0 --dport 53 --sport 1024:65534 -j ACCEPT 
+iptables -A INPUT -p UDP -i wlan0 --dport 67 --sport 1024:65534 -j ACCEPT  # dhcp-client
+iptables -A INPUT -p UDP -i wlan0 --dport 68 --sport 1024:65534 -j ACCEPT  # dhcp-client
+
+
+# ********* MASQUERADE ************
+
+# share internet connection via NAT
+# let all subnet in 'wlan0' network(now is 192.168.2.0/255.255.255.0) MASQUERADE
 
 iptables -t nat -A POSTROUTING -s 192.168.2.0/24 -d 0/0 -o ppp0 -j MASQUERADE
-
