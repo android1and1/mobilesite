@@ -1,0 +1,22 @@
+auto lo
+
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+pre-up /sbin/iptables-restore < /root/iptables.rulers/sofarsogood 
+
+## "wlan0" as soft ap(access poit)
+#auto wlan0
+#allow-hotplug wlan0
+#iface wlan0 inet dhcp 
+iface wlan0 inet static
+address 192.168.2.1
+netmask 255.255.255.0
+network 192.168.2.0
+
+#adsl setup,if want it enale,uncommit below lines.
+auto dsl-provider
+iface dsl-provider inet ppp
+pre-up /sbin/ifconfig eth0 up # line maintained by pppoeconf
+provider dsl-provider
